@@ -1,1 +1,3 @@
 Hello in Spanish is Hola
+
+The speed of light is 2 meters per second.
