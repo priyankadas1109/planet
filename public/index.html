@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangChain.js RAG Demo</title>
+</head>
+<body>
+    <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+        <h1>RAG Query System</h1>
+        
+        <div style="margin-bottom: 20px;">
+            <textarea id="apiKey" placeholder="Enter your OpenAI API key" style="width: 100%; padding: 10px;"></textarea>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <textarea id="userQuery" placeholder="Enter your question" style="width: 100%; padding: 10px;"></textarea>
+            <button onclick="processQuery()" style="margin-top: 10px; padding: 10px;">Submit Query</button>
+        </div>
+
+        <div id="response" style="white-space: pre-wrap; background: #f5f5f5; padding: 15px;"></div>
+    </div>
+
+    <script type="module">
+        import { OpenAIEmbeddings, ChatOpenAI } from 'https://esm.sh/@langchain/openai';
+        import { MemoryVectorStore } from 'https://esm.sh/langchain/vectorstores/memory';
+        import { PromptTemplate } from 'https://esm.sh/@langchain/core/prompts';
+        import { RunnableSequence } from 'https://esm.sh/@langchain/core/runnables';
+
+        // Configuration
+        const GITHUB_RAW_URL = 'https://github.com/djsurt/langchain/blob/dhananjay_updates/public/Sampletext.txt';
+
+        async function loadDocuments() {
+            try {
+                const response = await fetch(GITHUB_RAW_URL);
+                const text = await response.text();
+                
+                // Split the text into chunks (simple implementation)
+                const chunks = text.split('\n\n').filter(chunk => chunk.trim());
+                
+                return chunks.map(chunk => ({
+                    pageContent: chunk,
+                    metadata: { source: 'github' }
+                }));
+            } catch (error) {
+                console.error('Error loading documents:', error);
+                return [];
+            }
+        }
+
+        // Make processQuery available globally
+        window.processQuery = async function() {
+            const responseDiv = document.getElementById('response');
+            const apiKey = document.getElementById('apiKey').value;
+            const query = document.getElementById('userQuery').value;
+
+            if (!apiKey || !query) {
+                responseDiv.textContent = 'Please provide both API key and query.';
+                return;
+            }
+
+            try {
+                responseDiv.textContent = 'Loading...';
+
+                // Load and process documents
+                const documents = await loadDocuments();
+                
+                // Create embeddings using OpenAI
+                const embeddings = new OpenAIEmbeddings({
+                    openAIApiKey: apiKey
+                });
+
+                // Create vector store
+                const vectorStore = await MemoryVectorStore.fromDocuments(
+                    documents,
+                    embeddings
+                );
+
+                // Perform similarity search
+                const relevantDocs = await vectorStore.similaritySearch(query, 3);
+
+                // Create chat model
+                const model = new ChatOpenAI({
+                    openAIApiKey: apiKey,
+                    modelName: 'gpt-3.5-turbo',
+                    temperature: 0
+                });
+
+                // Create prompt template
+                const prompt = PromptTemplate.fromTemplate(`
+                    Answer the following question based on the provided context. If you cannot answer
+                    based on the context, say "I cannot answer this based on the provided context."
+                    
+                    Context: {context}
+                    
+                    Question: {question}
+                    
+                    Answer: `);
+
+                // Create chain
+                const chain = RunnableSequence.from([
+                    {
+                        context: (input) => input.context.map(doc => doc.pageContent).join('\n\n'),
+                        question: (input) => input.question
+                    },
+                    prompt,
+                    model,
+                    (output) => output.content
+                ]);
+
+                // Run chain
+                const response = await chain.invoke({
+                    context: relevantDocs,
+                    question: query
+                });
+
+                responseDiv.textContent = response;
+
+            } catch (error) {
+                console.error('Error:', error);
+                responseDiv.textContent = 'An error occurred: ' + error.message;
+            }
+        };
+    </script>
+</body>
+</html>
