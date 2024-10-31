@@ -13,11 +13,18 @@
             <textarea id="apiKey" placeholder="Enter your OpenAI API key" style="width: 100%; padding: 10px;"></textarea>
         </div>
 
-        <div>
-            Enter your github account
-            <textarea placeholder="Enter your github account" style="width: 100%; padding: 10px;"></textarea>
-            Enter the github repo
-            <textarea placeholder="Enter your github repo" style="width: 100%; padding: 10px;"></textarea>
+        <!-- New Document Source Selection -->
+        <div style="margin-bottom: 20px;">
+            <h3>Document Source</h3>
+            <select id="sourceType" onchange="toggleSourceInput()" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+                <option value="single">Single Document</option>
+                <option value="folder">GitHub Folder</option>
+                <option value="repo">Entire GitHub Repository</option>
+            </select>
+            
+            <input id="sourceUrl" type="text" placeholder="Enter GitHub URL" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+            <button onclick="loadAndProcessDocuments()" style="padding: 10px;">Load Documents</button>
+            <div id="loadStatus" style="margin-top: 10px;"></div>
         </div>
 
         <div style="margin-bottom: 20px;">
@@ -34,6 +41,41 @@
         import { PromptTemplate } from 'https://esm.sh/@langchain/core/prompts';
         import { RunnableSequence } from 'https://esm.sh/@langchain/core/runnables';
 
+        let documents = [];
+        let vectorStore = null;
+
+        //Function to convert Github URL 
+        function convertToRawUl(url){
+            return url.replace('github.com', 'raw.githubusercontent.com')
+            .replace('/blob', '/');
+        }
+
+        async function getRepoContents(url){
+            const apiUrl = url.replace('github.com', 'api.github.com/repos')
+            .replace('/tree/', '/contents/');
+
+            const response = await fetch(apiUrl);
+            if(!response.ok) throw new Error('failed to fetch repository contents');
+            return await response.json();
+        }
+
+        async function processFile(url){
+            try{
+                const rawUrl = convertToRawUl(url);
+                const response = await fetch(rawUrl);
+                const text = await response.text();
+
+                //Split the text into chunks
+                const chunks = text.split('\n\n').filter(chunk => chunk.trim());
+                return chunks.map(chunk => ({
+                    pageContent: chunk,
+                    metadata: { source: url }
+                }));
+            } catch (error){
+                console.error('Error processing file', error);
+                return [];
+            }
+        }
         // Configuration
         const GITHUB_RAW_URL = 'https://github.com/ModelEarth/planet/blob/dj_branch/public/Sampletext.txt';
 
