@@ -59,6 +59,7 @@
             return await response.json();
         }
 
+        // Function to process a file 
         async function processFile(url){
             try{
                 const rawUrl = convertToRawUl(url);
@@ -76,6 +77,45 @@
                 return [];
             }
         }
+
+        async function processFolder(folderUrl){
+            try{
+                const contents = await getRepoContents(folderUrl);
+                const fileContents = [];
+                
+                for(const item of contents){
+                    if(item.type == 'file' && (item.name.endsWith('.txt') || item.name.endsWith('.md'))){
+                        const docs = await processFile(item.html_url);
+                        fileContents.push(...docs);
+                    }
+                }
+                return fileContents;
+            } catch(error){
+                console.error('Error processing folder:', error);
+                return [];
+            }
+        }
+
+        async function processRepository(repoUrl){
+            try{
+                const contents = await getRepoContents(repoUrl);
+                const fileContents = [];
+                for(const item of contents){
+                    if(item.type == 'file' && (item.name.endsWith('.txt') || item.name.endsWith('.md'))){
+                        const docs = await processFile(item.html_url);
+                        fileContents.push(...docs);
+                    } else if(item.type == 'dir'){
+                        const folderContents = await processRepository(item.url);
+                        fileContents.push(...folderContents);
+                    }
+                }
+                return fileContents;
+            } catch(error){
+                console.error('Error processing respository:',error);
+                return [];
+            }
+        }
+
         // Configuration
         const GITHUB_RAW_URL = 'https://github.com/ModelEarth/planet/blob/dj_branch/public/Sampletext.txt';
 
