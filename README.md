@@ -1,6 +1,9 @@
-# Planet Langchain
+# Planet AI - Javascript with LLM APIs
 
-A javascript frontend for exploring location data and environmental impacts.
+A javascript frontend for exploring AI APIs using location data and environmental impact data.
+
+[OpenAI Python SDK](https://github.com/openai/openai-python) with [$25 free temporary access to Grok](https://x.ai/blog/api)
+
 
 Not yet implemented here...
 
