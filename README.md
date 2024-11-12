@@ -2,13 +2,16 @@
 
 A javascript frontend for exploring AI APIs using location data and environmental impact data.
 
-[OpenAI Python SDK](https://github.com/openai/openai-python) with [$25 free temporary access to Grok](https://x.ai/blog/api)
-
+### Javascript
 
 Not yet implemented here...
 
-LangChain.js Setup: [api.js.langchain.com](https://api.js.langchain.com)
+LangChain.js setup: [api.js.langchain.com](https://api.js.langchain.com)
 
 Installs to Users/[user]/node_modules/langchain on Mac.
 
 	yarn add langchain
+
+---
+
+Python setup in our [Langchain Python repo](https://github.com/ModelEarth/langchain)
