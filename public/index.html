@@ -119,11 +119,14 @@
         }
 
         // Configuration
-        const GITHUB_RAW_URL = 'https://github.com/djsurt/testRepo/blob/main/context.txt';
+        // const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/djsurt/testRepo/main/context.txt';
 
         async function loadDocuments() {
             try {
-                const response = await fetch(GITHUB_RAW_URL);
+                // Load the text from the provided URL
+                let urlFromInput = document.getElementById('sourceUrl').value;
+                urlFromInput = convertToRawUl(urlFromInput);
+                const response = await fetch(urlFromInput);
                 const text = await response.text();
                 
                 // Split the text into chunks (simple implementation)
