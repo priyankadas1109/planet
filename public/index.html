@@ -86,7 +86,7 @@
                 const fileContents = [];
                 
                 for(const item of contents){
-                    if(item.type == 'file' && (item.name.endsWith('.txt') || item.name.endsWith('.md'))){
+                    if(item.type == 'file'){
                         const docs = await processFile(item.html_url);
                         fileContents.push(...docs);
                     }
@@ -103,7 +103,7 @@
                 const contents = await getRepoContents(repoUrl);
                 const fileContents = [];
                 for(const item of contents){
-                    if(item.type == 'file' && (item.name.endsWith('.txt') || item.name.endsWith('.md'))){
+                    if(item.type == 'file'){
                         const docs = await processFile(item.html_url);
                         fileContents.push(...docs);
                     } else if(item.type == 'dir'){
@@ -118,24 +118,18 @@
             }
         }
 
-        // Configuration
-        // const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/djsurt/testRepo/main/context.txt';
-
         async function loadDocuments() {
             try {
-                // Load the text from the provided URL
-                let urlFromInput = document.getElementById('sourceUrl').value;
-                urlFromInput = convertToRawUl(urlFromInput);
-                const response = await fetch(urlFromInput);
-                const text = await response.text();
-                
-                // Split the text into chunks (simple implementation)
-                const chunks = text.split('\n\n').filter(chunk => chunk.trim());
-                
-                return chunks.map(chunk => ({
-                    pageContent: chunk,
-                    metadata: { source: 'github' }
-                }));
+                const sourceType = document.getElementById('sourceType').value;
+                const sourceUrl = document.getElementById('sourceUrl').value;
+
+                if (sourceType === 'repo') {
+                    return await processRepository(sourceUrl);
+                } else if (sourceType === 'folder') {
+                    return await processFolder(sourceUrl);
+                } else {
+                    return await processFile(sourceUrl);
+                }
             } catch (error) {
                 console.error('Error loading documents:', error);
                 return [];
