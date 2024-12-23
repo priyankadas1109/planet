@@ -9,11 +9,12 @@
     <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
         <h1>RAG Query System</h1>
         
+        <!--Get the API Key from this input-->
         <div style="margin-bottom: 20px;">
             <textarea id="apiKey" placeholder="Enter your OpenAI API key" style="width: 100%; padding: 10px;"></textarea>
         </div>
 
-        <!-- New Document Source Selection -->
+        <!-- Options for selecting the context -->
         <div style="margin-bottom: 20px;">
             <h3>Document Source</h3>
             <select id="sourceType" onchange="toggleSourceInput()" style="width: 100%; padding: 10px; margin-bottom: 10px;">
@@ -22,13 +23,14 @@
                 <option value="repo">Entire GitHub Repository</option>
             </select>
             
+            <!-- Area for inserting the github url for the context source -->
             <input id="sourceUrl" type="text" placeholder="Enter GitHub URL" style="width: 100%; padding: 10px; margin-bottom: 10px;">
             <button onclick="loadAndProcessDocuments()" style="padding: 10px;">Load Documents</button>
             <div id="loadStatus" style="margin-top: 10px;"></div>
         </div>
 
         <div style="margin-bottom: 20px;">
-            <textarea id="userQuery" placeholder="Enter your question" style="width: 100%; padding: 10px;"></textarea>
+            <textarea id="userQuery" placeholder="Enter your question based on the data source" style="width: 100%; padding: 10px;"></textarea>
             <button onclick="processQuery()" style="margin-top: 10px; padding: 10px;">Submit Query</button>
         </div>
 
@@ -117,7 +119,7 @@
         }
 
         // Configuration
-        const GITHUB_RAW_URL = 'https://github.com/ModelEarth/planet/blob/dj_branch/public/Sampletext.txt';
+        const GITHUB_RAW_URL = 'https://github.com/djsurt/testRepo/blob/main/context.txt';
 
         async function loadDocuments() {
             try {
