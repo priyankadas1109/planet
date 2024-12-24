@@ -17,7 +17,7 @@
         <!-- Options for selecting the context -->
         <div style="margin-bottom: 20px;">
             <h3>Document Source</h3>
-            <select id="sourceType" onchange="toggleSourceInput()" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+            <select id="sourceType" style="width: 100%; padding: 10px; margin-bottom: 10px;">
                 <option value="single">Single Document</option>
                 <option value="folder">GitHub Folder</option>
                 <option value="repo">Entire GitHub Repository</option>
@@ -52,12 +52,14 @@
             .replace('/blob', '/');
         }
 
-        async function getRepoContents(url){
-            const apiUrl = url.replace('github.com', 'api.github.com/repos')
-            .replace('/tree/', '/contents/');
+        async function getRepoContents(url) {
+            let apiUrl = url.replace('github.com', 'api.github.com/repos')
+                            .replace('/blob', '')
+                            .replace('/tree', '')
+                            .replace('/main', '') + '/contents';
 
             const response = await fetch(apiUrl);
-            if(!response.ok) throw new Error('failed to fetch repository contents');
+            if (!response.ok) throw new Error('Failed to fetch repository contents');
             return await response.json();
         }
 
@@ -128,6 +130,7 @@
                 } else if (sourceType === 'folder') {
                     return await processFolder(sourceUrl);
                 } else {
+                    // Default to single document
                     return await processFile(sourceUrl);
                 }
             } catch (error) {
