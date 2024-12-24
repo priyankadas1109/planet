@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangChain.js RAG Demo</title>
+</head>
+<body>
+    <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+        <h1>RAG Query System</h1>
+        
+        <!--Get the API Key from this input-->
+        <div style="margin-bottom: 20px;">
+            <textarea id="apiKey" placeholder="Enter your OpenAI API key" style="width: 100%; padding: 10px;"></textarea>
+        </div>
+
+        <!-- Options for selecting the context -->
+        <div style="margin-bottom: 20px;">
+            <h3>Document Source</h3>
+            <select id="sourceType" onchange="toggleSourceInput()" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+                <option value="single">Single Document</option>
+                <option value="folder">GitHub Folder</option>
+                <option value="repo">Entire GitHub Repository</option>
+            </select>
+            
+            <!-- Area for inserting the github url for the context source -->
+            <input id="sourceUrl" type="text" placeholder="Enter GitHub URL" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+            <button onclick="loadAndProcessDocuments()" style="padding: 10px;">Load Documents</button>
+            <div id="loadStatus" style="margin-top: 10px;"></div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <textarea id="userQuery" placeholder="Enter your question based on the data source" style="width: 100%; padding: 10px;"></textarea>
+            <button onclick="processQuery()" style="margin-top: 10px; padding: 10px;">Submit Query</button>
+        </div>
+
+        <div id="response" style="white-space: pre-wrap; background: #f5f5f5; padding: 15px;"></div>
+    </div>
+
+    <script type="module">
+        import { OpenAIEmbeddings, ChatOpenAI } from 'https://esm.sh/@langchain/openai';
+        import { MemoryVectorStore } from 'https://esm.sh/langchain/vectorstores/memory';
+        import { PromptTemplate } from 'https://esm.sh/@langchain/core/prompts';
+        import { RunnableSequence } from 'https://esm.sh/@langchain/core/runnables';
+
+        let documents = [];
+        let vectorStore = null;
+
+        //Function to convert Github URL 
+        function convertToRawUl(url){
+            return url.replace('github.com', 'raw.githubusercontent.com')
+            .replace('/blob', '/');
+        }
+
+        async function getRepoContents(url){
+            const apiUrl = url.replace('github.com', 'api.github.com/repos')
+            .replace('/tree/', '/contents/');
+
+            const response = await fetch(apiUrl);
+            if(!response.ok) throw new Error('failed to fetch repository contents');
+            return await response.json();
+        }
+
+        // Function to process a file 
+        async function processFile(url){
+            try{
+                const rawUrl = convertToRawUl(url);
+                const response = await fetch(rawUrl);
+                const text = await response.text();
+
+                //Split the text into chunks
+                const chunks = text.split('\n\n').filter(chunk => chunk.trim());
+                return chunks.map(chunk => ({
+                    pageContent: chunk,
+                    metadata: { source: url }
+                }));
+            } catch (error){
+                console.error('Error processing file', error);
+                return [];
+            }
+        }
+
+        async function processFolder(folderUrl){
+            try{
+                const contents = await getRepoContents(folderUrl);
+                const fileContents = [];
+                
+                for(const item of contents){
+                    if(item.type == 'file'){
+                        const docs = await processFile(item.html_url);
+                        fileContents.push(...docs);
+                    }
+                }
+                return fileContents;
+            } catch(error){
+                console.error('Error processing folder:', error);
+                return [];
+            }
+        }
+
+        async function processRepository(repoUrl){
+            try{
+                const contents = await getRepoContents(repoUrl);
+                const fileContents = [];
+                for(const item of contents){
+                    if(item.type == 'file'){
+                        const docs = await processFile(item.html_url);
+                        fileContents.push(...docs);
+                    } else if(item.type == 'dir'){
+                        const folderContents = await processRepository(item.url);
+                        fileContents.push(...folderContents);
+                    }
+                }
+                return fileContents;
+            } catch(error){
+                console.error('Error processing respository:',error);
+                return [];
+            }
+        }
+
+        async function loadDocuments() {
+            try {
+                const sourceType = document.getElementById('sourceType').value;
+                const sourceUrl = document.getElementById('sourceUrl').value;
+
+                if (sourceType === 'repo') {
+                    return await processRepository(sourceUrl);
+                } else if (sourceType === 'folder') {
+                    return await processFolder(sourceUrl);
+                } else {
+                    return await processFile(sourceUrl);
+                }
+            } catch (error) {
+                console.error('Error loading documents:', error);
+                return [];
+            }
+        }
+
+        // Make processQuery available globally
+        window.processQuery = async function() {
+            const responseDiv = document.getElementById('response');
+            const apiKey = document.getElementById('apiKey').value;
+            const query = document.getElementById('userQuery').value;
+
+            if (!apiKey || !query) {
+                responseDiv.textContent = 'Please provide both API key and query.';
+                return;
+            }
+
+            try {
+                responseDiv.textContent = 'Loading...';
+
+                // Load and process documents
+                const documents = await loadDocuments();
+                
+                // Create embeddings using OpenAI
+                const embeddings = new OpenAIEmbeddings({
+                    openAIApiKey: apiKey
+                });
+
+                // Create vector store
+                const vectorStore = await MemoryVectorStore.fromDocuments(
+                    documents,
+                    embeddings
+                );
+
+                // Perform similarity search
+                const relevantDocs = await vectorStore.similaritySearch(query, 3);
+
+                // Create chat model
+                const model = new ChatOpenAI({
+                    openAIApiKey: apiKey,
+                    modelName: 'gpt-3.5-turbo',
+                    temperature: 0
+                });
+
+                // Create prompt template
+                const prompt = PromptTemplate.fromTemplate(`
+                    Answer the following question based on the provided context. If you cannot answer
+                    based on the context, say "I cannot answer this based on the provided context."
+                    
+                    Context: {context}
+                    
+                    Question: {question}
+                    
+                    Answer: `);
+
+                // Create chain
+                const chain = RunnableSequence.from([
+                    {
+                        context: (input) => input.context.map(doc => doc.pageContent).join('\n\n'),
+                        question: (input) => input.question
+                    },
+                    prompt,
+                    model,
+                    (output) => output.content
+                ]);
+
+                // Run chain
+                const response = await chain.invoke({
+                    context: relevantDocs,
+                    question: query
+                });
+
+                responseDiv.textContent = response;
+
+            } catch (error) {
+                console.error('Error:', error);
+                responseDiv.textContent = 'An error occurred: ' + error.message;
+            }
+        };
+    </script>
+</body>
+</html>
