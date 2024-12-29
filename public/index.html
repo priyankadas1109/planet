@@ -51,16 +51,72 @@
             return url.replace('github.com', 'raw.githubusercontent.com')
             .replace('/blob', '/');
         }
+        async function getRepoContents(repoUrl, token = null) {
+            // Convert regular GitHub URL to API URL
+            const apiBaseUrl = 'https://api.github.com/repos';
+            
+            // Extract owner and repo name from URL
+            const urlParts = repoUrl
+                .replace('https://github.com/', '')
+                .replace('http://github.com/', '')
+                .split('/');
+            
+            const owner = urlParts[0];
+            const repo = urlParts[1];
+            
+            // Set up headers for GitHub API request
+            const headers = {
+                'Accept': 'application/vnd.github.v3+json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `token ${token}`;
+            }
 
-        async function getRepoContents(url) {
-            let apiUrl = url.replace('github.com', 'api.github.com/repos')
-                            .replace('/blob', '')
-                            .replace('/tree', '')
-                            .replace('/main', '') + '/contents';
+            async function fetchContents(path = '') {
+                const url = `${apiBaseUrl}/${owner}/${repo}/contents/${path}`;
+                
+                try {
+                const response = await fetch(url, { headers });
+                
+                if (!response.ok) {
+                    if (response.status === 403) {
+                    throw new Error('Rate limit exceeded. Consider using a GitHub token.');
+                    } else if (response.status === 404) {
+                    throw new Error('Repository or path not found.');
+                    }
+                    throw new Error(`GitHub API error: ${response.status}`);
+                }
 
-            const response = await fetch(apiUrl);
-            if (!response.ok) throw new Error('Failed to fetch repository contents');
-            return await response.json();
+                const data = await response.json();
+                let files = [];
+
+                // Handle array response (directory) or single file response
+                const items = Array.isArray(data) ? data : [data];
+
+                for (const item of items) {
+                    if (item.type === 'file') {
+                    files.push({
+                        name: item.name,
+                        path: item.path,
+                        size: item.size,
+                        type: 'file',
+                        url: item.download_url
+                    });
+                    } else if (item.type === 'dir') {
+                    // Recursively fetch contents of subdirectories
+                    const subFiles = await fetchContents(item.path);
+                    files = files.concat(subFiles);
+                    }
+                }
+
+                return files;
+                } catch (error) {
+                throw new Error(`Failed to fetch repository contents: ${error.message}`);
+                }
+            }
+
+            return await fetchContents();
         }
 
         // Function to process a file 
@@ -103,17 +159,18 @@
         async function processRepository(repoUrl){
             try{
                 const contents = await getRepoContents(repoUrl);
-                const fileContents = [];
-                for(const item of contents){
-                    if(item.type == 'file'){
-                        const docs = await processFile(item.html_url);
-                        fileContents.push(...docs);
-                    } else if(item.type == 'dir'){
-                        const folderContents = await processRepository(item.url);
-                        fileContents.push(...folderContents);
-                    }
-                }
-                return fileContents;
+                console.log(contents);
+                // const fileContents = [];
+                // for(const item of contents){
+                //     if(item.type == 'file'){
+                //         const docs = await processFile(item.html_url);
+                //         fileContents.push(...docs);
+                //     } else if(item.type == 'dir'){
+                //         const folderContents = await processRepository(item.url);
+                //         fileContents.push(...folderContents);
+                //     }
+                // }
+                // return fileContents;
             } catch(error){
                 console.error('Error processing respository:',error);
                 return [];
