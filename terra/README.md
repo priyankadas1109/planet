@@ -17,9 +17,9 @@ Europe - Ukraine, Russia, Scandinavia, Mediterranean, UK, Germany
 Africa - Egypt, Ethiopia, South Africa, Congo  
 Oceana and Antarctica  
 
-Countries are selected to provide a forum for the discussion and resolution of local issues.
+Country reps rotate to provide a forum for the discussion and resolution of current international issues.  
 
-**Tech:**  
+**Tech**  
 Golf balls that deliver molecular fixes  
 Low impact vehicles  
 Water purification and desalination bots and facilities  
@@ -27,5 +27,5 @@ Water transport innovations, locks, subterranean pipelines
 
 Golfers are followed annually through evolving terraformed courses to grab the attention of broad audiences.  
 
-**Terraform Goals**
+**Terraform Goals**  
 Clean water, large scale desalination, healthy ecosystems, restored biodiversity, properous economies extending hundreds of miles inland.
