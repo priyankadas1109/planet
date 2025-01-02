@@ -1,13 +1,19 @@
 # Terraforming Events
 
+### Fostering River Basin Restoration and Desalination  
+
 Prepared for AI model training for use in event planning and implementation.  
 
-**Phase 1**  
-River Basin Restoration and Desalination  
+**Golf Terraforming Goals**  
+Clean water, large scale desalination, healthy ecosystems, restored biodiversity, properous economies extending hundreds of miles inland.
+
+Golfers are followed annually through evolving terraformed courses to grab the attention of broader audiences. Mini-golf portions within facility buildings.  Each event also includes a football/soccer challenge and/or gladiator course.  
+
+**Initial Locations**  
 Golfing the Rio Grande  
 Golfing the Apalachicola (Chattahoochee + Plains Rivers)  
 
-**Teams**  
+**International Team Composition**  
 Six member teams (include additional rotating countries):  
 Americas - US, Mexico, Canada, Brazil  
 Middle East - Türkiye, Kurdistan, Israel, Gaza, Saudi Arabia, Iran  
@@ -24,8 +30,3 @@ Golf balls that deliver molecular fixes (using soft golf balls)
 Water purification and desalination bots and facility innovations  
 Water transport innovations, locks, subterranean pipelines  
 Low impact vehicles, audience venues, cameras  
-
-Golfers are followed annually through evolving terraformed courses to grab the attention of broader audiences. Mini-golf portions within facility buildings.  Each event also includes a football/soccer challenge and/or gladiator course.  
-
-**Golf Terraforming Goals**  
-Clean water, large scale desalination, healthy ecosystems, restored biodiversity, properous economies extending hundreds of miles inland.
