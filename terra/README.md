@@ -17,15 +17,15 @@ Europe - Ukraine, Russia, Scandinavia, Mediterranean, UK, Germany
 Africa - Egypt, Ethiopia, South Africa, Congo  
 Oceana and Antarctica  
 
-Country reps rotate to provide a forum for the discussion and resolution of current international issues.  
+Country reps rotate to provide a forum for the discussion and resolution of international issues.  
 
 **Terra Golf Tech**  
-Golf balls that deliver molecular fixes  
-Water purification and desalination bots and facility additions  
+Golf balls that deliver molecular fixes (using soft golf balls)  
+Water purification and desalination bots and facility innovations  
 Water transport innovations, locks, subterranean pipelines  
 Low impact vehicles, audience venues, cameras  
 
-Golfers are followed annually through evolving terraformed courses to grab the attention of broad audiences.  
+Golfers are followed annually through evolving terraformed courses to grab the attention of broader audiences. Mini-golf portions within facility buildings.  
 
 **Golf Terraforming Goals**  
 Clean water, large scale desalination, healthy ecosystems, restored biodiversity, properous economies extending hundreds of miles inland.
