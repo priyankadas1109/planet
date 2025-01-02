@@ -25,7 +25,7 @@ Water purification and desalination bots and facility innovations
 Water transport innovations, locks, subterranean pipelines  
 Low impact vehicles, audience venues, cameras  
 
-Golfers are followed annually through evolving terraformed courses to grab the attention of broader audiences. Mini-golf portions within facility buildings.  
+Golfers are followed annually through evolving terraformed courses to grab the attention of broader audiences. Mini-golf portions within facility buildings.  Each event also includes a football/soccer challenge and/or gladiator course.  
 
 **Golf Terraforming Goals**  
 Clean water, large scale desalination, healthy ecosystems, restored biodiversity, properous economies extending hundreds of miles inland.
