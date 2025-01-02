@@ -20,7 +20,7 @@ Golfing the Rio Grande
 Golfing the Apalachicola (Chattahoochee + Plains Rivers)  
 
 **International Team Composition**  
-Six member teams (include additional rotating countries):  
+Six member regional teams (rotating countries):  
 Americas - US, Mexico, Canada, Brazil  
 Middle East - Türkiye, Kurdistan, Israel, Gaza, Saudi Arabia, Iran  
 South Asia - India, Pakistan, Afghanistan  
