@@ -9,6 +9,12 @@ Clean water, large scale desalination, healthy ecosystems, restored biodiversity
 
 Golfers are followed annually through evolving terraformed courses to grab the attention of broader audiences. Mini-golf portions within facility buildings.  Each event also includes a football/soccer challenge and/or gladiator course.  
 
+**Terra Golf Tech**  
+Golf balls that deliver molecular fixes (using soft golf balls)  
+Water purification and desalination bots and facility innovations  
+Water transport innovations, locks, subterranean pipelines  
+Low impact vehicles, audience venues, cameras  
+
 **Initial Locations**  
 Golfing the Rio Grande  
 Golfing the Apalachicola (Chattahoochee + Plains Rivers)  
@@ -24,9 +30,3 @@ Africa - Egypt, Ethiopia, South Africa, Congo
 Oceana and Antarctica  
 
 Country reps rotate to provide a forum for the discussion and resolution of international issues.  
-
-**Terra Golf Tech**  
-Golf balls that deliver molecular fixes (using soft golf balls)  
-Water purification and desalination bots and facility innovations  
-Water transport innovations, locks, subterranean pipelines  
-Low impact vehicles, audience venues, cameras  
