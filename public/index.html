@@ -56,73 +56,119 @@
             return url.replace('github.com', 'raw.githubusercontent.com')
             .replace('/blob', '/');
         }
-        async function getRepoContents(repoUrl) {
-            // Convert regular GitHub URL to API URL
-            const apiBaseUrl = 'https://api.github.com/repos';
-            
-            // Extract owner and repo name from URL
-            const urlParts = repoUrl
-                .replace('https://github.com/', '')
-                .replace('http://github.com/', '')
-                .split('/');
-            
-            const owner = urlParts[0];
-            const repo = urlParts[1];
-            const token = document.getElementById('githubToken').value.trim();
-            // Set up headers for GitHub API request
-            const headers = {
-                'Accept': 'application/vnd.github.v3+json'
-            };
-            
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
 
-            async function fetchContents(path = '') {
-                const url = `${apiBaseUrl}/${owner}/${repo}/contents/${path}`;
+        async function getRepoContents(repoUrl) {
+    const apiBaseUrl = 'https://api.github.com/repos';
+    
+    // Extract owner and repo name from URL
+    const urlParts = repoUrl
+        .replace('https://github.com/', '')
+        .replace('http://github.com/', '')
+        .split('/');
+    
+    const owner = urlParts[0];
+    const repo = urlParts[1];
+    const token = document.getElementById('githubToken').value.trim();
+    
+    // Set up headers for GitHub API request
+    const headers = {
+        'Accept': 'application/vnd.github.v3+json'
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    // Add rate limit checking function
+    async function checkRateLimit() {
+        const rateLimitUrl = 'https://api.github.com/rate_limit';
+        const response = await fetch(rateLimitUrl, { headers });
+        const data = await response.json();
+        return {
+            remaining: data.rate.remaining,
+            reset: new Date(data.rate.reset * 1000)
+        };
+    }
+
+    // Add delay function for rate limiting
+    function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function fetchWithRetry(url, retries = 3) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                // Check rate limit before making request
+                const rateLimit = await checkRateLimit();
                 
-                try {
+                if (rateLimit.remaining <= 1) {
+                    const waitTime = Math.max(0, rateLimit.reset - new Date()) + 1000;
+                    console.log(`Rate limit reached. Waiting ${waitTime/1000} seconds...`);
+                    document.getElementById('loadStatus').textContent = 
+                        `Rate limit reached. Waiting ${Math.ceil(waitTime/1000)} seconds...`;
+                    await delay(waitTime);
+                }
+
                 const response = await fetch(url, { headers });
                 
+                if (response.status === 403) {
+                    throw new Error('Rate limit exceeded');
+                }
+                
                 if (!response.ok) {
-                    if (response.status === 403) {
-                    throw new Error('Rate limit exceeded. Consider using a GitHub token.');
-                    } else if (response.status === 404) {
-                    throw new Error('Repository or path not found.');
-                    }
                     throw new Error(`GitHub API error: ${response.status}`);
                 }
 
-                const data = await response.json();
-                let files = [];
+                return await response.json();
+            } catch (error) {
+                if (i === retries - 1) throw error;
+                await delay(2000 * (i + 1)); // Exponential backoff
+            }
+        }
+    }
 
-                // Handle array response (directory) or single file response
-                const items = Array.isArray(data) ? data : [data];
+    async function fetchContents(path = '') {
+        const url = `${apiBaseUrl}/${owner}/${repo}/contents/${path}`;
+        let files = [];
+        
+        try {
+            const data = await fetchWithRetry(url);
+            const items = Array.isArray(data) ? data : [data];
 
-                for (const item of items) {
+            // Process items in chunks to avoid overwhelming the API
+            const chunkSize = 5;
+            for (let i = 0; i < items.length; i += chunkSize) {
+                const chunk = items.slice(i, i + chunkSize);
+                
+                await Promise.all(chunk.map(async (item) => {
                     if (item.type === 'file') {
-                    files.push({
-                        name: item.name,
-                        path: item.path,
-                        size: item.size,
-                        type: 'file',
-                        url: item.download_url
-                    });
+                        files.push({
+                            name: item.name,
+                            path: item.path,
+                            size: item.size,
+                            type: 'file',
+                            url: item.download_url
+                        });
                     } else if (item.type === 'dir') {
-                    // Recursively fetch contents of subdirectories
-                    const subFiles = await fetchContents(item.path);
-                    files = files.concat(subFiles);
+                        const subFiles = await fetchContents(item.path);
+                        files = files.concat(subFiles);
                     }
-                }
+                }));
 
-                return files;
-                } catch (error) {
-                throw new Error(`Failed to fetch repository contents: ${error.message}`);
+                if (i + chunkSize < items.length) {
+                    await delay(1000); // Add delay between chunks
                 }
             }
 
-            return await fetchContents();
+            return files;
+        } catch (error) {
+            throw new Error(`Failed to fetch repository contents: ${error.message}`);
         }
+    }
+
+    return await fetchContents();
+}
+
 
         // Function to truncate text to a specified number of tokens
         function truncateText(text, maxTokens) {
@@ -134,23 +180,45 @@
         }
 
         // Function to process a file 
-        async function processFile(url){
-            try{
-                const rawUrl = convertToRawUl(url);
-                const response = await fetch(rawUrl);
-                const text = await response.text();
+// Function to process a file with text chunking
+async function processFile(url) {
+    try {
+        const rawUrl = convertToRawUl(url);
+        const response = await fetch(rawUrl);
+        const text = await response.text();
 
-                // Split the text into chunks
-                const chunks = text.split('\n\n').filter(chunk => chunk.trim());
-                return chunks.map(chunk => ({
-                    pageContent: truncateText(chunk, 2000), // Truncate each chunk to 2000 tokens
-                    metadata: { source: url }
-                }));
-            } catch (error){
-                console.error('Error processing file', error);
-                return [];
+        // Split into smaller chunks (approximately 2000 tokens per chunk)
+        const maxChunkLength = 6000; // Characters (rough approximation for 2000 tokens)
+        const chunks = [];
+        let currentChunk = '';
+        
+        // Split by paragraphs first
+        const paragraphs = text.split('\n\n');
+        
+        for (const paragraph of paragraphs) {
+            if ((currentChunk + paragraph).length > maxChunkLength) {
+                if (currentChunk) {
+                    chunks.push(currentChunk.trim());
+                }
+                currentChunk = paragraph;
+            } else {
+                currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
             }
         }
+        
+        if (currentChunk) {
+            chunks.push(currentChunk.trim());
+        }
+
+        return chunks.map(chunk => ({
+            pageContent: chunk,
+            metadata: { source: url }
+        }));
+    } catch (error) {
+        console.error('Error processing file:', error);
+        return [];
+    }
+}
 
         async function processFolder(folderUrl){
             try{
@@ -210,78 +278,86 @@
             }
         }
 
-        // Make processQuery available globally
-        window.processQuery = async function() {
-            const responseDiv = document.getElementById('response');
-            const apiKey = document.getElementById('apiKey').value;
-            const query = document.getElementById('userQuery').value;
+// Modify the processQuery function
+window.processQuery = async function() {
+    const responseDiv = document.getElementById('response');
+    const apiKey = document.getElementById('apiKey').value;
+    const query = document.getElementById('userQuery').value;
 
-            if (!apiKey || !query) {
-                responseDiv.textContent = 'Please provide both API key and query.';
-                return;
-            }
+    if (!apiKey || !query) {
+        responseDiv.textContent = 'Please provide both API key and query.';
+        return;
+    }
 
-            try {
-                responseDiv.textContent = 'Loading...';
+    try {
+        responseDiv.textContent = 'Loading...';
 
-                // Load and process documents
-                const documents = await loadDocuments();
-                
-                // Create embeddings using OpenAI
-                const embeddings = new OpenAIEmbeddings({
-                    openAIApiKey: apiKey
-                });
+        // Load and process documents
+        const documents = await loadDocuments();
+        
+        // Create embeddings using OpenAI
+        const embeddings = new OpenAIEmbeddings({
+            openAIApiKey: apiKey
+        });
 
-                // Create vector store
-                const vectorStore = await MemoryVectorStore.fromDocuments(
-                    documents,
-                    embeddings
-                );
+        // Create vector store
+        const vectorStore = await MemoryVectorStore.fromDocuments(
+            documents,
+            embeddings
+        );
 
-                // Perform similarity search
-                const relevantDocs = await vectorStore.similaritySearch(query, 3);
+        // Perform similarity search with reduced context
+        const relevantDocs = await vectorStore.similaritySearch(query, 2); // Reduced from 3 to 2 docs
 
-                // Create chat model
-                const model = new ChatOpenAI({
-                    openAIApiKey: apiKey,
-                    modelName: 'gpt-3.5-turbo',
-                    temperature: 0
-                });
+        // Ensure total context length is within limits
+        const combinedContext = relevantDocs.map(doc => doc.pageContent).join('\n\n');
+        if (combinedContext.length > 6000) { // Approximate character limit
+            relevantDocs.pop(); // Remove last document if context is too long
+        }
 
-                // Create prompt template
-                const prompt = PromptTemplate.fromTemplate(`
-                    Answer the following question based on the provided context. Try to answer it to the best of your ability.
-                    
-                    Context: {context}
-                    
-                    Question: {question}
-                    
-                    Answer: `);
+        // Create chat model with explicit max tokens
+        const model = new ChatOpenAI({
+            openAIApiKey: apiKey,
+            modelName: 'gpt-3.5-turbo',
+            temperature: 0,
+            maxTokens: 1000 // Explicit token limit for response
+        });
 
-                // Create chain
-                const chain = RunnableSequence.from([
-                    {
-                        context: (input) => input.context.map(doc => doc.pageContent).join('\n\n'),
-                        question: (input) => input.question
-                    },
-                    prompt,
-                    model,
-                    (output) => output.content
-                ]);
+        // Modified prompt template to encourage concise responses
+        const prompt = PromptTemplate.fromTemplate(`
+            Answer the following question based on the provided context. 
+            Be concise and focus on the most relevant information.
+            
+            Context: {context}
+            
+            Question: {question}
+            
+            Answer: `);
 
-                // Run chain
-                const response = await chain.invoke({
-                    context: relevantDocs,
-                    question: query
-                });
+        // Create chain
+        const chain = RunnableSequence.from([
+            {
+                context: (input) => input.context.map(doc => doc.pageContent).join('\n\n'),
+                question: (input) => input.question
+            },
+            prompt,
+            model,
+            (output) => output.content
+        ]);
 
-                responseDiv.textContent = response;
+        // Run chain
+        const response = await chain.invoke({
+            context: relevantDocs,
+            question: query
+        });
 
-            } catch (error) {
-                console.error('Error:', error);
-                responseDiv.textContent = 'An error occurred: ' + error.message;
-            }
-        };
+        responseDiv.textContent = response;
+
+    } catch (error) {
+        console.error('Error:', error);
+        responseDiv.textContent = 'An error occurred: ' + error.message;
+    }
+};
     </script>
 </body>
 </html>
