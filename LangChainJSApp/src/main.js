@@ -33,21 +33,42 @@ async function fetchFilesFromRepo(owner, repo, path="", githubToken){
 export async function pullFromRepo(){
     files = [];
     const githubToken = document.getElementById('githubToken').value;
-    const loader = new GithubRepoLoader(
-        "https://github.com/djsurt/testRepo",
-        {
-          branch: "main",
-          recursive: true,
-          processSubmodules: true,
-          unknown: "warn",
-          accessToken: githubToken,
-          maxConcurrency: 2,
+    const repoUrl = document.getElementById('sourceUrl').value;
+    const apiKey = document.getElementById('apiKey').value;
+    try{
+        const response = await fetch("http://localhost:8080/api/load-github-repo", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                repoUrl,
+                githubToken
+            }),
+        });
+        if(!response.ok){
+            throw new Error(`Failed to load Github repo: ${response.statusText}`);
         }
-    );
+        const { documents } = await response.json();
+        console.log("Loaded documents:", documents);
+    } catch(e){
+        console.log("Error loading documents:", e);
+    }
+    // const loader = new GithubRepoLoader(
+    //     "https://github.com/djsurt/testRepo",
+    //     {
+    //       branch: "main",
+    //       recursive: true,
+    //       processSubmodules: true,
+    //       unknown: "warn",
+    //       accessToken: githubToken,
+    //       maxConcurrency: 2,
+    //     }
+    // );
     
-    const docs = await loader.load();
+    // const docs = await loader.load();
     
-    console.log({ docs });
+    // console.log({ docs });
     // try{
     //     await fetchFilesFromRepo(owner, repo, "", githubToken);
     //     console.log("Files:", files);
@@ -56,14 +77,14 @@ export async function pullFromRepo(){
     // }
     // at this point, we have all the files from the repo. Now we need to feed it to the RAG model
     
-    const apiKey = document.getElementById('apiKey').value;
-    const llm = new ChatOpenAI({
-        model: "gpt-4o-mini",
-        temperature: 0
-    });
-    const embeddings = new OpenAIEmbeddings({
-        model: "text-embedding-3-large"
-    });
-    const vectorStore = new MemoryVectorStore(embeddings);
+    // const apiKey = document.getElementById('apiKey').value;
+    // const llm = new ChatOpenAI({
+    //     model: "gpt-4o-mini",
+    //     temperature: 0
+    // });
+    // const embeddings = new OpenAIEmbeddings({
+    //     model: "text-embedding-3-large"
+    // });
+    // const vectorStore = new MemoryVectorStore(embeddings);
 
 }

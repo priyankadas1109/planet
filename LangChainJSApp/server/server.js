@@ -1,10 +1,19 @@
 import bodyParser from 'body-parser';
 import express from 'express';
+import cors from 'cors';
 import { GithubRepoLoader } from '@langchain/community/document_loaders/web/github';
 
 
 const app = express();
 app.use(bodyParser.json());
+
+app.use(
+    cors({
+      origin: 'http://localhost:5173', // Frontend origin
+      methods: ['GET', 'POST'],        // Allow specific HTTP methods
+      credentials: true,               // Allow cookies if needed
+    })
+);
 
 app.post("/api/load-github-repo", async (req, res) => {
     const { repoUrl, githubToken, branch = "main" } = req.body;
