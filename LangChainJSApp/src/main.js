@@ -6,11 +6,10 @@ import { GithubRepoLoader } from "@langchain/community/document_loaders/web/gith
 import { Annotation, StateGraph } from "@langchain/langgraph";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import {PineconeStore} from "@langchain/pinecone";
-import type { Document } from "@langchain/core/documents";
+import { Document } from "@langchain/core/documents";
 import { Pinecone as PineconeClient } from "@pinecone-database/pinecone";
 
 
-let files = [];
 
 async function fetchFilesFromRepo(owner, repo, path="", githubToken){
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
@@ -37,16 +36,20 @@ async function fetchFilesFromRepo(owner, repo, path="", githubToken){
     }
 }
 export async function pullFromRepo(){
-    files = [];
+    let files = [];
     const githubToken = document.getElementById('githubToken').value;
     const repoUrl = document.getElementById('sourceUrl').value;
     const apiKey = document.getElementById('apiKey').value;
+
+    //Need OpenAI Api Key
     const llm = new ChatOpenAI({
         model: "gpt-4o-mini",
-        temperature: 0
+        temperature: 0,
+        apiKey: apiKey
     });
     const embeddings = new OpenAIEmbeddings({
-        model: "text-embedding-3-large"
+        model: "text-embedding-3-small",
+        apiKey: apiKey
     });
     const vectorStore = new MemoryVectorStore(embeddings);
     try{
@@ -63,33 +66,36 @@ export async function pullFromRepo(){
         if(!response.ok){
             throw new Error(`Failed to load Github repo: ${response.statusText}`);
         }
-        const { docs } = await response.json();
+        const reply = await response.json();
         //We have the documents now
+        const docs = reply["documents"];
+        console.log(docs);
 
-        console.log("Loaded documents:", docs);
+        // Ensure documents are in the correct format before splitting
+        const formattedDocs = docs.map(doc => {
+            if (typeof doc === 'string') {
+                return new Document({ pageContent: doc });
+            }
+            return new Document({
+                pageContent: doc.content || doc.pageContent || '',
+                metadata: doc.metadata || {}
+            });
+        });
 
         // Run the documents through the splitter
         const splitter = new RecursiveCharacterTextSplitter({
             chunkSize:1000,
             chunkOverlap:200
         });
+
         const allSplits = await splitter.splitDocuments(docs);
 
-        const embeddings = new OpenAIEmbeddings({
-            model: "text-embedding-3-small"
-        });
-        const documentsRes = await embeddings.embedDocuments(docs);
-        for(let i = 0; i < docs.length; ++i){
-            await vectorStore.addDocuments([
-                {
-                    content: docs[i].content,
-                    metadata: docs[i].metadata,
-                    embedding: documentsRes[i],
-                },
-            ]);
-        }
+        console.log("Splitted Documents:", allSplits);
 
-        const query = "Custom Query";
+        // Add documents to vector store directly without separate embedding step
+        await vectorStore.addDocuments(allSplits);
+
+        const query = "What is in this repository?";
         const queryEmbedding = await embeddings.embedQuery(query);
         const topMatches = await vectorStore.similaritySearch(queryEmbedding, 5);
         console.log("Top matches:", topMatches);
