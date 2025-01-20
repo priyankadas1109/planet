@@ -88,6 +88,25 @@ export async function pullFromRepo(){
                 },
             ]);
         }
+
+        const query = "Custom Query";
+        const queryEmbedding = await embeddings.embedQuery(query);
+        const topMatches = await vectorStore.similaritySearch(queryEmbedding, 5);
+        console.log("Top matches:", topMatches);
+        const context = topMatches.map((doc) => doc.content).join("\n");
+        const prompt = `
+        You are an expert assistant. Use the following context to answer the query:
+        Context:
+        ${context}
+
+        Query:
+        ${query}
+
+        Answer:
+        `;
+        const result = await llm.generate(prompt);
+        console.log("Response from LLM:", response.text);
+
     } catch(e){
         console.log("Error loading documents:", e);
     }
