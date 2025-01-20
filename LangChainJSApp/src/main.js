@@ -1,10 +1,14 @@
-import { OpenAIEmbeddings, ChatOpenAI } from "@langchain/openai";
+import { OpenAIEmbeddings, ChatOpenAI, OpenAI } from "@langchain/openai";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { ChatPromptTemplate, PromptTemplate } from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
 import { GithubRepoLoader } from "@langchain/community/document_loaders/web/github";
 import { Annotation, StateGraph } from "@langchain/langgraph";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import {PineconeStore} from "@langchain/pinecone";
+import type { Document } from "@langchain/core/documents";
+import { Pinecone as PineconeClient } from "@pinecone-database/pinecone";
+
 
 let files = [];
 
@@ -60,27 +64,30 @@ export async function pullFromRepo(){
             throw new Error(`Failed to load Github repo: ${response.statusText}`);
         }
         const { docs } = await response.json();
+        //We have the documents now
+
         console.log("Loaded documents:", docs);
+
+        // Run the documents through the splitter
         const splitter = new RecursiveCharacterTextSplitter({
             chunkSize:1000,
             chunkOverlap:200
         });
         const allSplits = await splitter.splitDocuments(docs);
 
-        await vectorStore.addDocuments(allSplits);
-        const promptTemplate = await pull<ChatPromptTemplate>("rlm/rag-prompt");
-
-        //Define the state of the application
-        const InputStateAnnotation = Annotation.Root({
-            question: Annotation<string>,
+        const embeddings = new OpenAIEmbeddings({
+            model: "text-embedding-3-small"
         });
-
-        const StateAnnotation = Annotation.Root({
-            question: Annotation<string>,
-            context: Annotation<Document[]>,
-            answer: Annotation<string>,
-        });
-
+        const documentsRes = await embeddings.embedDocuments(docs);
+        for(let i = 0; i < docs.length; ++i){
+            await vectorStore.addDocuments([
+                {
+                    content: docs[i].content,
+                    metadata: docs[i].metadata,
+                    embedding: documentsRes[i],
+                },
+            ]);
+        }
     } catch(e){
         console.log("Error loading documents:", e);
     }
