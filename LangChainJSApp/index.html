@@ -36,16 +36,12 @@
 
         <div style="margin-bottom: 20px;">
             <textarea id="userQuery" placeholder="Enter your question based on the data source" style="width: 100%; padding: 10px;"></textarea>
-            <button onclick="pullFromRepo()" style="margin-top: 10px; padding: 10px;">Submit Query</button>
+            <button id="submitButton" style="margin-top: 10px; padding: 10px;">Submit Query</button>
         </div>
 
         <div id="response" style="white-space: pre-wrap; background: #f5f5f5; padding: 15px;"></div>
     </div>
 
-    <script type="module" src="./src/main.js" defer></script>
-    <script type="module">
-        import {pullFromRepo} from './src/main.js';
-        window.pullFromRepo = pullFromRepo;
-    </script>
+    <script type="module" src="src/main.js"></script>
 </body>
 </html>

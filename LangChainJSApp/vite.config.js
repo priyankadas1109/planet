@@ -13,5 +13,8 @@ export default defineConfig({
       }
     },
   },
+  optimizeDeps: {
+    include: ["@langchain/openai", "@langchain/core/prompts", "@pinecone-database/pinecone"],
+  },
 })
 

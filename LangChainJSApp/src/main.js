@@ -3,13 +3,10 @@ import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { ChatPromptTemplate, PromptTemplate } from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
 import { GithubRepoLoader } from "@langchain/community/document_loaders/web/github";
-import { Annotation, StateGraph } from "@langchain/langgraph";
-import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import {RecursiveCharacterTextSplitter} from "langchain/text_splitter";
 import {PineconeStore} from "@langchain/pinecone";
 import { Document } from "@langchain/core/documents";
 import { Pinecone as PineconeClient } from "@pinecone-database/pinecone";
-
-
 
 async function fetchFilesFromRepo(owner, repo, path="", githubToken){
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
@@ -125,6 +122,15 @@ export async function pullFromRepo(){
     // at this point, we have all the files from the repo. Now we need to feed it to the RAG model
     
     // const apiKey = document.getElementById('apiKey').value;
-
-
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Get references to HTML elements
+    const button = document.getElementById('submitButton');
+
+    // Add click event listener to the button
+    button.addEventListener('click', () => {
+        pullFromRepo();
+    });
+});
+
