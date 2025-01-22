@@ -78,23 +78,21 @@ export async function pullFromRepo(){
                 metadata: doc.metadata || {}
             });
         });
-
+        console.log("Formatted Documents:", formattedDocs);
         // Run the documents through the splitter
         const splitter = new RecursiveCharacterTextSplitter({
             chunkSize:1000,
             chunkOverlap:200
         });
 
-        const allSplits = await splitter.splitDocuments(docs);
-
+        const allSplits = await splitter.splitDocuments(formattedDocs);
         console.log("Splitted Documents:", allSplits);
-
         // Add documents to vector store directly without separate embedding step
         await vectorStore.addDocuments(allSplits);
 
         const query = "What is in this repository?";
         const queryEmbedding = await embeddings.embedQuery(query);
-        const topMatches = await vectorStore.similaritySearch(queryEmbedding, 5);
+        const topMatches = await vectorStore.similaritySearch(query, 5);
         console.log("Top matches:", topMatches);
         const context = topMatches.map((doc) => doc.content).join("\n");
         const prompt = `
