@@ -1,37 +1,40 @@
 import { OpenAIEmbeddings, ChatOpenAI, OpenAI } from "@langchain/openai";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
-import { ChatPromptTemplate, PromptTemplate } from "@langchain/core/prompts";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
-import { GithubRepoLoader } from "@langchain/community/document_loaders/web/github";
 import {RecursiveCharacterTextSplitter} from "langchain/text_splitter";
-import {PineconeStore} from "@langchain/pinecone";
 import { Document } from "@langchain/core/documents";
-import { Pinecone as PineconeClient } from "@pinecone-database/pinecone";
 
-async function fetchFilesFromRepo(owner, repo, path="", githubToken){
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-    try{
-        const response = await fetch(url, {
-            headers: {
-                "Accept": "application/vnd.github.v3+json",
-                "Authorization": `Bearer ${githubToken}`
-            },
-        });
-        if(!response.ok){
-            throw new Error(`Failed to fetch documents: ${response.statusText}`);
-        }
-        const json = await response.json();
-        for(const item of json){
-            if(item.type === 'file'){
-                files.push(item);
-            } else if(item.type === 'dir'){
-                await fetchFilesFromRepo(owner, repo, item.path, githubToken);
-            }
-        }
-    } catch(e){
-        console.error(`Error fetching from path ${path}:`, e);
-    }
+async function generateResponse(context, query, llm) {
+    const promptTemplate = ChatPromptTemplate.fromTemplate(`
+        You are an expert assistant answering questions based on the context provided.
+        Use the following context to answer the query:
+
+        Context:
+        {context}
+
+        Query:
+        {query}
+
+        Provide a detailed, accurate response based on the context provided.
+        If you're unsure about something, please say so.
+        
+        Answer:
+    `);
+
+    const chain = RunnableSequence.from([
+        promptTemplate,
+        llm,
+    ]);
+
+    const response = await chain.invoke({
+        context,
+        query,
+    });
+
+    return response.content;
 }
+
 export async function pullFromRepo(){
     let files = [];
     const githubToken = document.getElementById('githubToken').value;
@@ -90,23 +93,14 @@ export async function pullFromRepo(){
         // Add documents to vector store directly without separate embedding step
         await vectorStore.addDocuments(allSplits);
 
-        const query = "What is in this repository?";
-        const queryEmbedding = await embeddings.embedQuery(query);
+        const query = "What is in your context?";
         const topMatches = await vectorStore.similaritySearch(query, 5);
         console.log("Top matches:", topMatches);
-        const context = topMatches.map((doc) => doc.content).join("\n");
-        const prompt = `
-        You are an expert assistant. Use the following context to answer the query:
-        Context:
-        ${context}
-
-        Query:
-        ${query}
-
-        Answer:
-        `;
-        const result = await llm.generate(prompt);
-        console.log("Response from LLM:", response.text);
+        const context = topMatches.map((doc) => doc.pageContent).join("\n");
+        console.log("Context:", context);
+        console.log("Query:", query);
+        const answer = await generateResponse(context, query, llm);
+        console.log(answer);
 
     } catch(e){
         console.log("Error loading documents:", e);
