@@ -2,12 +2,12 @@ import { OpenAIEmbeddings, ChatOpenAI, OpenAI } from "@langchain/openai";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
-import {RecursiveCharacterTextSplitter} from "langchain/text_splitter";
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { Document } from "@langchain/core/documents";
 
 async function generateResponse(context, query, llm) {
     const promptTemplate = ChatPromptTemplate.fromTemplate(`
-        You are an expert assistant answering questions based on the context provided.
+        You are an expert assistant answering questions related to the repository data pulled from a GitHub repository.
         Use the following context to answer the query:
 
         Context:
@@ -93,29 +93,21 @@ export async function pullFromRepo(){
         // Add documents to vector store directly without separate embedding step
         await vectorStore.addDocuments(allSplits);
 
-        const query = "What is in your context?";
+        const query = document.getElementById('userQuery').value;
         const topMatches = await vectorStore.similaritySearch(query, 5);
         console.log("Top matches:", topMatches);
         const context = topMatches.map((doc) => doc.pageContent).join("\n");
         console.log("Context:", context);
         console.log("Query:", query);
         const answer = await generateResponse(context, query, llm);
-        console.log(answer);
+        document.getElementById('response').innerText = answer;
 
     } catch(e){
         console.log("Error loading documents:", e);
     }
-    // try{
-    //     await fetchFilesFromRepo(owner, repo, "", githubToken);
-    //     console.log("Files:", files);
-    // } catch(e){
-    //     console.error("Error fetching files:", e);
-    // }
-    // at this point, we have all the files from the repo. Now we need to feed it to the RAG model
-    
-    // const apiKey = document.getElementById('apiKey').value;
 }
 
+// Event listener Javascript code
 document.addEventListener('DOMContentLoaded', () => {
     // Get references to HTML elements
     const button = document.getElementById('submitButton');
