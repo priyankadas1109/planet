@@ -8,10 +8,20 @@ Not yet implemented here...
 
 LangChain.js setup: [api.js.langchain.com](https://api.js.langchain.com)
 
-Installs to Users/[user]/node_modules/langchain on Mac.
+Commands to run to get started:
 
-	yarn add langchain
+1. cd LangChainJSApp
 
----
+2. npm i
+
+3. cd server
+
+4. node server.js
+
+5. cd ..
+
+6. npm run dev
+
+This will pop up a window on your browser and you can interact with the app
 
 Python setup in our [Langchain Python repo](https://github.com/ModelEarth/langchain)
