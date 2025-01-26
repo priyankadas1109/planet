@@ -21,12 +21,12 @@
         
         <!--Get the API Key from this input-->
         <div style="margin-bottom: 20px;">
-            <textarea id="apiKey" placeholder="Enter your OpenAI API key" style="width: 100%; padding: 10px;"></textarea>
+            <textarea id="apiKey" placeholder="Enter your LLM's API key" style="width: 100%; padding: 10px;"></textarea>
         </div>
 
         <!--Entering the github token-->
         <div style="margin-bottom: 20px;">
-            <textarea id="githubToken" placeholder="Enter your GitHub Personal Access Token (optional)" style="width: 100%; padding: 10px;"></textarea>
+            <textarea id="githubToken" placeholder="Enter your GitHub Personal Access Token" style="width: 100%; padding: 10px;"></textarea>
         </div>
 
         <!-- Options for selecting the context -->
@@ -40,7 +40,6 @@
             
             <!-- Area for inserting the github url for the context source -->
             <input id="sourceUrl" type="text" placeholder="Enter GitHub URL" style="width: 100%; padding: 10px; margin-bottom: 10px;">
-            <button onclick="loadAndProcessDocuments()" style="padding: 10px;">Load Documents</button>
             <div id="loadStatus" style="margin-top: 10px;"></div>
         </div>
 

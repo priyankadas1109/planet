@@ -1,4 +1,5 @@
 import { OpenAIEmbeddings, ChatOpenAI, OpenAI } from "@langchain/openai";
+import { ChatXAI } from "@langchain/xai";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
@@ -40,13 +41,30 @@ export async function pullFromRepo(){
     const githubToken = document.getElementById('githubToken').value;
     const repoUrl = document.getElementById('sourceUrl').value;
     const apiKey = document.getElementById('apiKey').value;
+    const chosenLLM = document.getElementById("aiModel").value;
+    let llm;
+    switch(chosenLLM){
+        case "openai":
+            //Need OpenAI Api Key
+            llm = new ChatOpenAI({
+                model: "gpt-4o-mini",
+                temperature: 0,
+                apiKey: apiKey
+            });
+            break;
+        case "grok":
+            llm = new ChatXAI({
+                model: "grok-beta",
+                temperature: 0,
+                
+            })
+            break;
+        case "ollama":
+            break;
+        default:
+            console.log("Invalid LLM model selected");
+    }
 
-    //Need OpenAI Api Key
-    const llm = new ChatOpenAI({
-        model: "gpt-4o-mini",
-        temperature: 0,
-        apiKey: apiKey
-    });
     const embeddings = new OpenAIEmbeddings({
         model: "text-embedding-3-small",
         apiKey: apiKey
