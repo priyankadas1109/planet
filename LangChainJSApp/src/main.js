@@ -46,6 +46,36 @@ async function generateResponse(context, query, llm) {
     return response.content;
 }
 
+
+async function fetchRepoContentsFromUrl(repoUrl){
+    try{
+        const match = repoUrl.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)/);
+        if (!match) throw new Error("Invalid GitHub repository URL");
+        const owner = match[1];
+        const repo = match[2];
+        const branch = "main";
+        const contents = await fetchRepoContents(owner, repo, branch);
+        console.log("Repository Contents:", contents);
+        return contents; // Return all files
+    } catch (error) {
+        console.error("Error fetching repository contents:", error);
+        return [];
+    }
+}
+
+async function fetchRepoContents(owner, repo, branch, path=""){
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
+    const headers = token ? { Authorization: `token ${token}` } : {};
+
+    try{
+        const response = await fetch(url, { headers });
+    }
+    catch{
+        console.error("Error fetching repository contents:", error);
+        return [];
+    }
+}
+
 export async function pullFromRepo(){
     let files = [];
     const githubToken = document.getElementById('githubToken').value;
@@ -127,16 +157,17 @@ export async function pullFromRepo(){
     });
     const vectorStore = new MemoryVectorStore(embeddings);
     try{
-        const response = await fetch("http://localhost:8080/api/load-github-repo", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                repoUrl,
-                githubToken
-            }),
-        });
+        // const response = await fetch("http://localhost:8080/api/load-github-repo", {
+        //     method: "POST",
+        //     headers: {
+        //         "Content-Type": "application/json"
+        //     },
+        //     body: JSON.stringify({
+        //         repoUrl,
+        //         githubToken
+        //     }),
+        // });
+
         if(!response.ok){
             throw new Error(`Failed to load Github repo: ${response.statusText}`);
         }
