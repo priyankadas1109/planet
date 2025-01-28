@@ -1,10 +1,20 @@
-import { OpenAIEmbeddings, ChatOpenAI, OpenAI } from "@langchain/openai";
+//Import statements for all the different chat models and their embeddings
+import { OpenAIEmbeddings, ChatOpenAI, AzureChatOpenAI } from "@langchain/openai";
 import { ChatXAI } from "@langchain/xai";
+import { ChatAnthropic } from "@langchain/anthropic";
+import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
+import { TogetherAI } from "@langchain/community/llms/togetherai";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatCohere } from "@langchain/cohere";
+import { ChatGroq } from "@langchain/groq";
+import { MistralAI } from "@langchain/mistralai";
+
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { Document } from "@langchain/core/documents";
+import { GithubRepoLoader } from '@langchain/community/document_loaders/web/github';
 
 async function generateResponse(context, query, llm) {
     const promptTemplate = ChatPromptTemplate.fromTemplate(`
@@ -44,7 +54,7 @@ export async function pullFromRepo(){
     const chosenLLM = document.getElementById("aiModel").value;
     let llm;
     switch(chosenLLM){
-        case "openai":
+        case "OpenAI":
             //Need OpenAI Api Key
             llm = new ChatOpenAI({
                 model: "gpt-4o-mini",
@@ -52,15 +62,61 @@ export async function pullFromRepo(){
                 apiKey: apiKey
             });
             break;
-        case "grok":
-            llm = new ChatXAI({
-                model: "grok-beta",
+        case "Anthropic":
+            llm = new ChatAnthropic({
+                model: "claude-3-5-sonnet-20240620",
+                apiKey: apiKey
+            });
+            break;
+        case "Azure":
+            llm = new AzureChatOpenAI({
+                model: "gpt-4o",
                 temperature: 0,
-                
-            })
+                azureOpenAIApiKey: apiKey
+            });
             break;
-        case "ollama":
+        case "Google":
+            llm = new ChatGoogleGenerativeAI({
+                model: "gemini-1.5-pro",
+                temperature: 0,
+                apiKey: apiKey
+            });
             break;
+        case "Cohere":
+            llm = new ChatCohere({
+                model: "command-r-plus",
+                temperature: 0,
+                apiKey: apiKey
+            });
+            break;
+        case "FireworksAI":
+            llm = new ChatFireworks({
+                model: "accounts/fireworks/models/llama-v3p1-70b-instruct",
+                temperature: 0,
+                apiKey: apiKey
+            });
+            break;
+        case "Groq":
+            llm = new ChatGroq({
+                model:"mixtral-8x7b-32768",
+                temperature: 0,
+                apiKey: apiKey
+            });
+            break;
+        case "MistralAI":
+            llm = new MistralAI({
+                model: "codestral-latest",
+                temperature: 0,
+                apiKey: apiKey
+            });
+            break;
+        //This is a langchian community LLM
+        case "TogetherAI":
+            llm = new TogetherAI({
+                model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+                maxTokens: 256,
+                apiKey: apiKey
+            });
         default:
             console.log("Invalid LLM model selected");
     }
