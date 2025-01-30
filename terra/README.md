@@ -30,3 +30,5 @@ Africa - Egypt, Ethiopia, South Africa, Congo
 Oceana and Antarctica  
 
 Country reps rotate to provide a forum for the discussion and resolution of international issues.  
+
+Vietnam’s capital Hanoi tops [most polluted](https://www.msn.com/en-us/news/world/nine-million-people-choke-on-toxic-smog-in-most-polluted-place-on-earth/ar-AA1wZKsV) major cities for the first time in history, followed by India’s Delhi, Bosnia and Herzegovina’s Sarajevo and Bangladesh’s Dhaka.
