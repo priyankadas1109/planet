@@ -1,11 +1,11 @@
 //Import statements for all the different chat models and their embeddings
-import { OpenAIEmbeddings, ChatOpenAI, AzureChatOpenAI } from "@langchain/openai";
+import { OpenAIEmbeddings, ChatOpenAI, AzureChatOpenAI, AzureOpenAIEmbeddings } from "@langchain/openai";
 import { ChatXAI } from "@langchain/xai";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 import { TogetherAI } from "@langchain/community/llms/togetherai";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { ChatCohere } from "@langchain/cohere";
+import { ChatCohere, CohereEmbeddings } from "@langchain/cohere";
 import { ChatGroq } from "@langchain/groq";
 import { MistralAI } from "@langchain/mistralai";
 
@@ -66,7 +66,7 @@ async function fetchRepoContentsFromUrl(repoUrl){
         const owner = match[1];
         const repo = match[2];
         const branch = "main";
-        const contents = await fetchRepoContents(owner, repo, branch);
+        const contents = await convertToLangChainDocs(owner, repo, branch);
         console.log("Repository Contents:", contents);
         return contents; // Return all files
     } catch (error) {
@@ -143,7 +143,7 @@ async function convertToLangChainDocs(owner, repo, branch, token = null) {
 
     const documents = [];
     for (const file of files) {
-        if (file.download_url) { // Ensure the file has a valid download URL
+        if (file.url) { // Ensure the file has a valid download URL
             const content = await fetchFileContent(file.download_url, token);
             if (content) {
                 documents.push(
@@ -172,6 +172,7 @@ export async function pullFromRepo(){
     const apiKey = document.getElementById('apiKey').value;
     const chosenLLM = document.getElementById("aiModel").value;
     let llm;
+    let embeddings;
     switch(chosenLLM){
         case "OpenAI":
             //Need OpenAI Api Key
@@ -180,18 +181,26 @@ export async function pullFromRepo(){
                 temperature: 0,
                 apiKey: apiKey
             });
+            embeddings = new OpenAIEmbeddings({
+                model: "text-embedding-3-small",
+                apiKey: apiKey
+            });
             break;
         case "Anthropic":
             llm = new ChatAnthropic({
                 model: "claude-3-5-sonnet-20240620",
                 apiKey: apiKey
             });
+
             break;
         case "Azure":
             llm = new AzureChatOpenAI({
                 model: "gpt-4o",
                 temperature: 0,
                 azureOpenAIApiKey: apiKey
+            });
+            embeddings = new AzureOpenAIEmbeddings({
+                azureOpenAIApiEmbeddingsDeploymentName: "text-embedding-ada-002"
             });
             break;
         case "Google":
@@ -206,6 +215,9 @@ export async function pullFromRepo(){
                 model: "command-r-plus",
                 temperature: 0,
                 apiKey: apiKey
+            });
+            embeddings = new CohereEmbeddings({
+                model: "embed-english-v3.0"
             });
             break;
         case "FireworksAI":
@@ -239,35 +251,10 @@ export async function pullFromRepo(){
         default:
             console.log("Invalid LLM model selected");
     }
-
-    const embeddings = new OpenAIEmbeddings({
-        model: "text-embedding-3-small",
-        apiKey: apiKey
-    });
     const vectorStore = new MemoryVectorStore(embeddings);
     try{
-        // const response = await fetch("http://localhost:8080/api/load-github-repo", {
-        //     method: "POST",
-        //     headers: {
-        //         "Content-Type": "application/json"
-        //     },
-        //     body: JSON.stringify({
-        //         repoUrl,
-        //         githubToken
-        //     }),
-        // });
-
-        // if(!response.ok){
-        //     throw new Error(`Failed to load Github repo: ${response.statusText}`);
-        // }
-        // const reply = await response.json();
-        // //We have the documents now
-        // const docs = reply["documents"];
-        // console.log(docs);
-
         const contents = await fetchRepoContentsFromUrl(repoUrl);
         console.log("Contents:", contents);
-
         // // Ensure documents are in the correct format before splitting
         // const formattedDocs = docs.map(doc => {
         //     if (typeof doc === 'string') {
@@ -279,25 +266,25 @@ export async function pullFromRepo(){
         //     });
         // });
         // console.log("Formatted Documents:", formattedDocs);
-        // // Run the documents through the splitter
-        // const splitter = new RecursiveCharacterTextSplitter({
-        //     chunkSize:1000,
-        //     chunkOverlap:200
-        // });
+        // Run the documents through the splitter
+        const splitter = new RecursiveCharacterTextSplitter({
+            chunkSize:10000,
+            chunkOverlap:2000
+        });
 
-        // const allSplits = await splitter.splitDocuments(formattedDocs);
-        // console.log("Splitted Documents:", allSplits);
-        // // Add documents to vector store directly without separate embedding step
-        // await vectorStore.addDocuments(allSplits);
+        const allSplits = await splitter.splitDocuments(contents);
+        console.log("Splitted Documents:", allSplits);
+        // Add documents to vector store directly without separate embedding step
+        await vectorStore.addDocuments(allSplits);
 
-        // const query = document.getElementById('userQuery').value;
-        // const topMatches = await vectorStore.similaritySearch(query, 5);
-        // console.log("Top matches:", topMatches);
-        // const context = topMatches.map((doc) => doc.pageContent).join("\n");
-        // console.log("Context:", context);
-        // console.log("Query:", query);
-        // const answer = await generateResponse(context, query, llm);
-        // document.getElementById('response').innerText = answer;
+        const query = document.getElementById('userQuery').value;
+        const topMatches = await vectorStore.similaritySearch(query, 5);
+        console.log("Top matches:", topMatches);
+        const context = topMatches.map((doc) => doc.pageContent).join("\n");
+        console.log("Context:", context);
+        console.log("Query:", query);
+        const answer = await generateResponse(context, query, llm);
+        document.getElementById('response').innerText = answer;
 
     } catch(e){
         console.log("Error loading documents:", e);
