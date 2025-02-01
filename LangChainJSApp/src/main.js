@@ -289,9 +289,10 @@ export async function pullFromRepo(){
         await vectorStore.addDocuments(allSplits);
 
         const query = document.getElementById('userQuery').value;
+
         const topMatches = await vectorStore.similaritySearch(query, 5);
         console.log("Top matches:", topMatches);
-        const context = topMatches.map((doc) => doc.pageContent).join("\n");
+        const context = topMatches.map((doc, i) => `Source ${i + 1}: ${doc.metadata.source}\n${doc.pageContent}`).join("\n\n");
         console.log("Context:", context);
         console.log("Query:", query);
         const answer = await generateResponse(context, query, llm);
