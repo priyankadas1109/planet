@@ -61,13 +61,35 @@ async function generateResponse(context, query, llm) {
  */
 async function fetchRepoContentsFromUrl(repoUrl){
     try{
-        const match = repoUrl.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)/);
-        if (!match) throw new Error("Invalid GitHub repository URL");
-        const owner = match[1];
-        const repo = match[2];
-        const branch = "main";
-        const contents = await convertToLangChainDocs(owner, repo, branch);
-        console.log("Repository Contents:", contents);
+        const urlType = document.getElementById('sourceType').value;
+        let contents = [];
+        if(urlType == 'repo'){
+            const match = repoUrl.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)/);
+            if(!match) throw new Error("Invalid GitHub repository URL");
+            const owner = match[1];
+            const repo = match[2];
+            contents = await convertToLangChainDocs(owner, repo, "main");
+        } else if(urlType == 'folder'){
+            const match = repoUrl.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/tree\/([^\/]+)\/(.+)/);
+            if (!match) throw new Error("Invalid GitHub folder URL");
+            const owner = match[1];
+            const repo = match[2];
+            const branch = match[3];
+            const folderPath = match[4];
+            contents = await fetchRepoContents(owner, repo, branch, folderPath);
+        } else if(urlType == 'single'){
+            const match = repoUrl.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/blob\/([^\/]+)\/(.+)/);
+            if (!match) throw new Error("Invalid GitHub file URL");
+            const owner = match[1];
+            const repo = match[2];
+            const branch = match[3];
+            const filePath = match[4];
+            const fileContent = await fetchFileContent(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${filePath}`);
+            contents = [new Document({
+                pageContent: fileContent,
+                metadata: { source: filePath }
+            })];
+        }
         return contents; // Return all files
     } catch (error) {
         console.error("Error fetching repository contents:", error);
@@ -255,17 +277,6 @@ export async function pullFromRepo(){
     try{
         const contents = await fetchRepoContentsFromUrl(repoUrl);
         console.log("Contents:", contents);
-        // // Ensure documents are in the correct format before splitting
-        // const formattedDocs = docs.map(doc => {
-        //     if (typeof doc === 'string') {
-        //         return new Document({ pageContent: doc });
-        //     }
-        //     return new Document({
-        //         pageContent: doc.content || doc.pageContent || '',
-        //         metadata: doc.metadata || {}
-        //     });
-        // });
-        // console.log("Formatted Documents:", formattedDocs);
         // Run the documents through the splitter
         const splitter = new RecursiveCharacterTextSplitter({
             chunkSize:10000,

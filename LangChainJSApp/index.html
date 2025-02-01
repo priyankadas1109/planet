@@ -4,60 +4,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LangChain.js RAG Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
-        <h1>RAG Query System</h1>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="max-w-2xl w-full bg-white shadow-lg rounded-lg p-6">
+        <h1 class="text-2xl font-bold text-center mb-4">RAG Query System</h1>
 
-        <!-- Options for selecting the AI model -->
-        <div style="margin-bottom: 20px;">
-            <h3>Select AI Model</h3>
-            <select id="aiModel" style="width: 100%; padding: 10px; margin-bottom: 10px;">
-            <option value="OpenAI">OpenAI</option>
-            <option value="Anthropic">Anthropic</option>
-            <option value="Azure">Azure</option>
-            <option value="Google">Google</option>
-            <option value="Cohere">Cohere</option>
-            <option value="FireworksAI">Fireworks AI</option>
-            <option value="Groq">Groq</option>
-            <option value="MistralAI">Mistral AI</option>
-            <option value="TogetherAI">Together AI</option>
-            <option value="Databricks">Databricks</option>
+        <!-- AI Model Selection -->
+        <div class="mb-4">
+            <h3 class="text-lg font-semibold">Select AI Model</h3>
+            <select id="aiModel" class="w-full p-2 border rounded mt-2">
+                <option value="OpenAI">OpenAI</option>
+                <option value="Anthropic">Anthropic</option>
+                <option value="Azure">Azure</option>
+                <option value="Google">Google</option>
+                <option value="Cohere">Cohere</option>
+                <option value="FireworksAI">Fireworks AI</option>
+                <option value="Groq">Groq</option>
+                <option value="MistralAI">Mistral AI</option>
+                <option value="TogetherAI">Together AI</option>
+                <option value="Databricks">Databricks</option>
             </select>
         </div>
-        
-        <!--Get the API Key from this input-->
-        <div style="margin-bottom: 20px;">
-            <textarea id="apiKey" placeholder="Enter your LLM's API key" style="width: 100%; padding: 10px;"></textarea>
+
+        <!-- API Key Input -->
+        <div class="mb-4">
+            <textarea id="apiKey" class="w-full p-2 border rounded" placeholder="Enter your LLM's API key"></textarea>
         </div>
 
-        <!--Entering the github token-->
-        <div style="margin-bottom: 20px;">
-            <textarea id="githubToken" placeholder="Enter your GitHub Personal Access Token" style="width: 100%; padding: 10px;"></textarea>
+        <!-- GitHub Token Input -->
+        <div class="mb-4">
+            <textarea id="githubToken" class="w-full p-2 border rounded" placeholder="Enter your GitHub Personal Access Token"></textarea>
         </div>
 
-        <button id="TestPull">Test Pull</button>
+        <button id="TestPull" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">Test Pull</button>
 
-        <!-- Options for selecting the context -->
-        <div style="margin-bottom: 20px;">
-            <h3>Document Source</h3>
-            <select id="sourceType" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+        <!-- Document Source Selection -->
+        <div class="mt-4">
+            <h3 class="text-lg font-semibold">Document Source</h3>
+            <select id="sourceType" class="w-full p-2 border rounded mt-2">
                 <option value="single">Single Document</option>
                 <option value="folder">GitHub Folder</option>
                 <option value="repo">Entire GitHub Repository</option>
             </select>
-            
-            <!-- Area for inserting the github url for the context source -->
-            <input id="sourceUrl" type="text" placeholder="Enter GitHub URL" style="width: 100%; padding: 10px; margin-bottom: 10px;">
-            <div id="loadStatus" style="margin-top: 10px;"></div>
+
+            <!-- GitHub URL Input -->
+            <input id="sourceUrl" type="text" placeholder="Enter GitHub URL"
+                class="w-full p-2 border rounded mt-2">
+            <div id="loadStatus" class="text-sm text-gray-600 mt-2"></div>
         </div>
 
-        <div style="margin-bottom: 20px;">
-            <textarea id="userQuery" placeholder="Enter your question based on the data source" style="width: 100%; padding: 10px;"></textarea>
-            <button id="submitButton" style="margin-top: 10px; padding: 10px;">Submit Query</button>
+        <!-- User Query Input -->
+        <div class="mt-4">
+            <textarea id="userQuery" class="w-full p-2 border rounded" placeholder="Enter your question based on the data source"></textarea>
+            <button id="submitButton" class="w-full bg-green-500 text-white py-2 rounded mt-2 hover:bg-green-600">
+                Submit Query
+            </button>
         </div>
 
-        <div id="response" style="white-space: pre-wrap; background: #f5f5f5; padding: 15px;"></div>
+        <div id="response" class="mt-4 p-4 bg-gray-200 rounded whitespace-pre-wrap"></div>
     </div>
 
     <script type="module" src="src/main.js"></script>
