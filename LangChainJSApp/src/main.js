@@ -195,6 +195,7 @@ export async function pullFromRepo(){
     const chosenLLM = document.getElementById("aiModel").value;
     let llm;
     let embeddings;
+    let needOtherAPIKey = false;
     switch(chosenLLM){
         case "OpenAI":
             //Need OpenAI Api Key
@@ -213,7 +214,8 @@ export async function pullFromRepo(){
                 model: "claude-3-5-sonnet-20240620",
                 apiKey: apiKey
             });
-
+            //Need another API key for embedding
+            needOtherAPIKey = true;
             break;
         case "Azure":
             llm = new AzureChatOpenAI({
@@ -231,6 +233,8 @@ export async function pullFromRepo(){
                 temperature: 0,
                 apiKey: apiKey
             });
+            //Need another API key for embedding
+            needOtherAPIKey = true;
             break;
         case "Cohere":
             llm = new ChatCohere({
@@ -248,6 +252,8 @@ export async function pullFromRepo(){
                 temperature: 0,
                 apiKey: apiKey
             });
+            //Need another API key for embedding
+            needOtherAPIKey = true;
             break;
         case "Groq":
             llm = new ChatGroq({
@@ -255,6 +261,8 @@ export async function pullFromRepo(){
                 temperature: 0,
                 apiKey: apiKey
             });
+            //Need another API key for embedding
+            needOtherAPIKey = true;
             break;
         case "MistralAI":
             llm = new MistralAI({
@@ -262,6 +270,8 @@ export async function pullFromRepo(){
                 temperature: 0,
                 apiKey: apiKey
             });
+            //Need another API key for embedding
+            needOtherAPIKey = true;
             break;
         //This is a langchian community LLM
         case "TogetherAI":
@@ -270,8 +280,17 @@ export async function pullFromRepo(){
                 maxTokens: 256,
                 apiKey: apiKey
             });
+            needOtherAPIKey = true;
+            //Need another API key for embedding
         default:
             console.log("Invalid LLM model selected");
+    }
+    if(needOtherAPIKey){
+        const otherAPIKey = document.getElementById('otherApiKey').value;
+        embeddings = new OpenAIEmbeddings({
+            model: "text-embedding-3-small",
+            apiKey: otherAPIKey
+        });
     }
     const vectorStore = new MemoryVectorStore(embeddings);
     try{
