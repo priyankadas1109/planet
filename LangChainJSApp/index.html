@@ -13,30 +13,34 @@
         <!-- AI Model Selection -->
         <div class="mb-4">
             <h3 class="text-lg font-semibold">Select AI Model</h3>
-            <select id="aiModel" class="w-full p-2 border rounded mt-2">
-                <option value="OpenAI">OpenAI</option>
-                <option value="Anthropic">Anthropic</option>
-                <option value="Azure">Azure</option>
-                <option value="Google">Google</option>
-                <option value="Cohere">Cohere</option>
-                <option value="FireworksAI">Fireworks AI</option>
-                <option value="Groq">Groq</option>
-                <option value="MistralAI">Mistral AI</option>
-                <option value="TogetherAI">Together AI</option>
-                <option value="Databricks">Databricks</option>
-            </select>
+            <input id="aiModel" class="w-full p-2 border rounded mt-2" placeholder="Enter model name manually or select below">
+
+            <button id="fetchModels" class="w-full bg-blue-500 text-white py-2 rounded mt-2 hover:bg-blue-600">
+                Load OpenAI Models
+            </button>
+
+            <div class="mt-2">
+                <h4 class="text-md font-semibold">Available Models:</h4>
+                <div id="modelList" class="grid grid-cols-2 gap-2 mt-2 text-sm text-blue-500 cursor-pointer">
+                    <!-- Models will be added here dynamically -->
+                </div>
+            </div>
         </div>
 
+
         <!-- API Key Input -->
+        <h3 class="text-lg font-semibold">Enter the LLM API Key</h3>
         <div class="mb-4">
             <textarea id="apiKey" class="w-full p-2 border rounded" placeholder="Enter your LLM's API key"></textarea>
         </div>
 
+        <h3 class="text-lg font-semibold">Enter the API Key for the embedding model you want to use</h3>
         <div class="mb-4">
             <textarea id="otherAPIKey" class="w-full p-2 border rounded" placeholder="Enter the OpenAPI Key in case your LLM provider does not have an embedding model"></textarea>
         </div>
 
         <!-- GitHub Token Input -->
+        <h3 class="text-lg font-semibold">Enter your Github personal access token</h3>
         <div class="mb-4">
             <textarea id="githubToken" class="w-full p-2 border rounded" placeholder="Enter your GitHub Personal Access Token"></textarea>
         </div>

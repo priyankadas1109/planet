@@ -203,3 +203,43 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+document.addEventListener("DOMContentLoaded", () => {
+    const modelListDiv = document.getElementById("modelList");
+    const aiModelInput = document.getElementById("aiModel");
+    const fetchModelsButton = document.getElementById("fetchModels");
+
+    fetchModelsButton.addEventListener("click", async () => {
+        const apiKey = document.getElementById("apiKey").value.trim();
+        if (!apiKey) {
+            alert("Please enter your OpenAI API key first.");
+            return;
+        }
+
+        try {
+            const response = await fetch("https://api.openai.com/v1/models", {
+                headers: { "Authorization": `Bearer ${apiKey}` }
+            });
+
+            if (!response.ok) throw new Error("Failed to fetch models. Check your API key.");
+
+            const data = await response.json();
+            const models = data.data.map(model => model.id); // Extract model names
+
+            modelListDiv.innerHTML = ""; // Clear previous models
+            models.forEach(model => {
+                const span = document.createElement("span");
+                span.textContent = model;
+                span.className = "model-item";
+                span.style.cursor = "pointer";
+                span.style.color = "blue";
+                span.onclick = () => aiModelInput.value = model; // Copy model name to input
+                modelListDiv.appendChild(span);
+            });
+        } catch (error) {
+            alert(error.message);
+        }
+    });
+});
+
+
+
