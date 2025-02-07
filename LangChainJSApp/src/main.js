@@ -61,13 +61,15 @@ export async function pullFromRepo(){
     const githubToken = document.getElementById('githubToken').value;
     const repoUrl = document.getElementById('sourceUrl').value;
     const apiKey = document.getElementById('apiKey').value;
-    const chosenLLM = document.getElementById("aiModel").value;
+    const chosenService = document.getElementById("aiModel").value;
     let llm;
     let embeddings;
     let needOtherAPIKey = false;
-    switch(chosenLLM){
+    let chosenLLM;
+    switch(chosenService){
         case "OpenAI":
             //Need OpenAI Api Key
+            chosenLLM = document.getElementById("openAIModel").value;
             llm = new ChatOpenAI({
                 model: "gpt-4o-mini",
                 temperature: 0,
