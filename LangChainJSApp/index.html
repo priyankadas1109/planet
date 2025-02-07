@@ -12,31 +12,28 @@
 
         <!-- AI Model Selection -->
         <div class="mb-4">
-            <h3 class="text-lg font-semibold">Select AI Model</h3>
-            <select id="aiModel" class="w-full p-2 border rounded mt-2">
-                <option value="OpenAI">OpenAI</option>
-                <option value="Anthropic">Anthropic</option>
+            <h3 class="text-lg font-semibold">Select your Model:</h3>
+            <select>
+                <option value="OpenAI">Open AI</option>
                 <option value="Azure">Azure</option>
-                <option value="Google">Google</option>
-                <option value="Cohere">Cohere</option>
-                <option value="FireworksAI">Fireworks AI</option>
-                <option value="Groq">Groq</option>
-                <option value="MistralAI">Mistral AI</option>
-                <option value="TogetherAI">Together AI</option>
-                <option value="Databricks">Databricks</option>
             </select>
         </div>
 
+
         <!-- API Key Input -->
+        <h3 class="text-lg font-semibold">Enter the LLM API Key</h3>
         <div class="mb-4">
             <textarea id="apiKey" class="w-full p-2 border rounded" placeholder="Enter your LLM's API key"></textarea>
         </div>
 
+        <!-- In case the service provider doesn't have an embedding model -->
+        <!-- <h3 class="text-lg font-semibold">Enter the API Key for the embedding model you want to use</h3>
         <div class="mb-4">
             <textarea id="otherAPIKey" class="w-full p-2 border rounded" placeholder="Enter the OpenAPI Key in case your LLM provider does not have an embedding model"></textarea>
-        </div>
+        </div> -->
 
         <!-- GitHub Token Input -->
+        <h3 class="text-lg font-semibold">Enter your Github personal access token</h3>
         <div class="mb-4">
             <textarea id="githubToken" class="w-full p-2 border rounded" placeholder="Enter your GitHub Personal Access Token"></textarea>
         </div>
