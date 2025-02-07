@@ -16,11 +16,7 @@ Commands to run to get started:
 
 3. cd server
 
-4. node server.js
-
-5. cd ..
-
-6. npm run dev
+4. npm run dev
 
 This will pop up a window on your browser and you can interact with the app
 

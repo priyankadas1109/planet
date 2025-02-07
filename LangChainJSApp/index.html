@@ -13,9 +13,19 @@
         <!-- AI Model Selection -->
         <div class="mb-4">
             <h3 class="text-lg font-semibold">Select your Model:</h3>
-            <select id="aiModel">
+            <select id="aiModel" onchange="toggleOpenAIModels()">
                 <option value="OpenAI">Open AI</option>
                 <option value="Azure">Azure</option>
+            </select>
+        </div>
+
+        <!-- OpenAI Model Selection (Initially Hidden) -->
+        <div class="mb-4" id="openAIModelsContainer" style="display: none;">
+            <h3 class="text-lg font-semibold">Select OpenAI Model:</h3>
+            <select id="openAIModel">
+                <option value="gpt-4o-mini">GPT-3.5 Turbo</option>
+                <option value="gpt-4">GPT-4</option>
+                <option value="gpt-4-turbo">GPT-4 Turbo</option>
             </select>
         </div>
 
@@ -64,7 +74,18 @@
 
         <div id="response" class="mt-4 p-4 bg-gray-200 rounded whitespace-pre-wrap"></div>
     </div>
-
+    <script>
+        function toggleOpenAIModels() {
+            var aiModel = document.getElementById("aiModel").value;
+            var openAIModelsContainer = document.getElementById("openAIModelsContainer");
+        
+            if (aiModel === "OpenAI") {
+                openAIModelsContainer.style.display = "block";
+            } else {
+                openAIModelsContainer.style.display = "none";
+            }
+        }
+    </script>
     <script type="module" src="src/main.js"></script>
 </body>
 </html>
