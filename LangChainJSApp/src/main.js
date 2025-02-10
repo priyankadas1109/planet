@@ -170,8 +170,8 @@ export async function pullFromRepo(){
         console.log("Contents:", contents);
         // Run the documents through the splitter
         const splitter = new RecursiveCharacterTextSplitter({
-            chunkSize:10000,
-            chunkOverlap:2000
+            chunkSize:2000,
+            chunkOverlap:200
         });
 
         const allSplits = await splitter.splitDocuments(contents);
@@ -181,7 +181,7 @@ export async function pullFromRepo(){
 
         const query = document.getElementById('userQuery').value;
 
-        const topMatches = await vectorStore.similaritySearch(query, 5);
+        const topMatches = await vectorStore.similaritySearch(query, 3);
         console.log("Top matches:", topMatches);
         const context = topMatches.map((doc, i) => `Source ${i + 1}: ${doc.metadata.source}\n${doc.pageContent}`).join("\n\n");
         console.log("Context:", context);
@@ -194,13 +194,34 @@ export async function pullFromRepo(){
     }
 }
 
-// Event listener Javascript code
-document.addEventListener('DOMContentLoaded', () => {
-    // Get references to HTML elements
-    const button = document.getElementById('submitButton');
 
-    // Add click event listener to the button
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('submitButton');
+    const chosenService = document.getElementById('aiModel');
+    const otherApiKeyField = document.getElementById('otherApiKeyContainer'); // Div or input container
+
+    // Function to check if another API key is needed
+    function checkOtherAPIKeyRequirement() {
+        const service = chosenService.value;
+        const needsOtherAPIKey = ["Anthropic", "Google", "FireworksAI", "Groq", "MistralAI", "TogetherAI"].includes(service);
+
+        // Show or hide the other API key field accordingly
+        if (needsOtherAPIKey) {
+            otherApiKeyField.style.display = "block";
+        } else {
+            otherApiKeyField.style.display = "none";
+        }
+    }
+
+    // Listen for model selection change
+    chosenService.addEventListener('change', checkOtherAPIKeyRequirement);
+
+    // Execute function on page load in case the dropdown is preselected
+    checkOtherAPIKeyRequirement();
+
+    // Add event listener for the button
     button.addEventListener('click', () => {
         pullFromRepo();
     });
 });
+
