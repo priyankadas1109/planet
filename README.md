@@ -1,3 +1,5 @@
+[Active Projects](https://model.earth/projects)
+
 # Planet AI - Javascript with LLM APIs
 
 A javascript frontend for exploring AI APIs using location data and environmental impact data.
