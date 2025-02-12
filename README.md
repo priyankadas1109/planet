@@ -2,22 +2,16 @@
 
 A javascript frontend for exploring AI APIs using location data and environmental impact data.
 
-### Javascript
+[View our interface work](LangChainJSApp) (client-side javascript)
 
-Not yet implemented here...
+LangChain.js javascript setup: [api.js.langchain.com](https://api.js.langchain.com)
 
-LangChain.js setup: [api.js.langchain.com](https://api.js.langchain.com)
+Options commands to run as a server:
 
-Commands to run to get started:
+	cd LangChainJSApp
+	npm i
+	cd server
+	npm run dev
 
-1. cd LangChainJSApp
 
-2. npm i
-
-3. cd server
-
-4. npm run dev
-
-This will pop up a window on your browser and you can interact with the app
-
-Python setup in our [Langchain Python repo](https://github.com/ModelEarth/langchain)
+We've also dabbled with Python in our [Langchain Python Repo](https://github.com/ModelEarth/langchain)
