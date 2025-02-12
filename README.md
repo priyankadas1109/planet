@@ -8,7 +8,7 @@ A javascript frontend for exploring AI APIs using location data and environmenta
 
 LangChain.js javascript setup: [api.js.langchain.com](https://api.js.langchain.com)
 
-Options commands to run as a server:
+Optional commands to run as a server:
 
 	cd LangChainJSApp
 	npm i
