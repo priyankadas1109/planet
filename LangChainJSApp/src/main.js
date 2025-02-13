@@ -8,6 +8,7 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatCohere, CohereEmbeddings } from "@langchain/cohere";
 import { ChatGroq } from "@langchain/groq";
 import { MistralAI } from "@langchain/mistralai";
+import { HfInference } from "@huggingface/inference";
 
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
@@ -66,6 +67,8 @@ export async function pullFromRepo(){
     let embeddings;
     let needOtherAPIKey = false;
     let chosenLLM;
+    let huggingface = false;
+
     switch(chosenService){
         case "OpenAI":
             //Need OpenAI Api Key
@@ -152,10 +155,17 @@ export async function pullFromRepo(){
                 apiKey: apiKey
             });
             needOtherAPIKey = true;
-            //Need another API key for embedding
+        case "HuggingFace":
+            llm = new HfInference({
+                apiKey: apiKey,
+            });
+            needOtherAPIKey = true;
+            huggingface = true;
         default:
             console.log("Invalid LLM model selected");
     }
+
+    //Instantiate the embedding model if the LLM requires a different API key
     if(needOtherAPIKey){
         const otherAPIKey = document.getElementById('otherApiKey').value;
         embeddings = new OpenAIEmbeddings({
@@ -163,7 +173,9 @@ export async function pullFromRepo(){
             apiKey: otherAPIKey
         });
     }
+
     const vectorStore = new MemoryVectorStore(embeddings);
+
     try{
         const urlType = document.getElementById('sourceType').value;
         const contents = await fetchRepoContentsFromUrl(repoUrl, urlType);
@@ -186,7 +198,20 @@ export async function pullFromRepo(){
         const context = topMatches.map((doc, i) => `Source ${i + 1}: ${doc.metadata.source}\n${doc.pageContent}`).join("\n\n");
         console.log("Context:", context);
         console.log("Query:", query);
-        const answer = await generateResponse(context, query, llm);
+        let answer = "";
+        if(!huggingface){
+            answer = await generateResponse(context, query, llm);
+        } else{
+            //Handle the hugging face inference here
+            answer = "";
+            for await (const output of llm.textGenerationStream({
+                model: "google/flan-t5-xxl", //Need to replace this with the model the user chooses
+                inputs: 'repeat "one two three four"',
+                parameters: { max_new_tokens: 250 }
+              })) {
+                answer += output.generated_text;
+            }
+        }
         document.getElementById('response').innerText = answer;
 
     } catch(e){

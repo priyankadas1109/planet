@@ -38,19 +38,11 @@
                 <option value="Groq">Groq</option>
                 <option value="MistralAI">MistralAI</option>
                 <option value="TogetherAI">TogetherAI</option>
+                <option value="HuggingFace">HuggingFace</option>
             </select>
         </div>
 
-        <!-- OpenAI Model Selection (Initially Hidden) (not currently in use) -->
-        <div class="mb-4" id="openAIModelsContainer" style="display: none;">
-            <h3 class="text-lg font-semibold">Select OpenAI Model:</h3>
-            <select id="openAIModel">
-                <option value="gpt-4o-mini">GPT-4o-mini Turbo</option>
-                <option value="gpt-4">GPT-4</option>
-                <option value="gpt-4-turbo">GPT-4 Turbo</option>
-            </select>
-        </div>
-
+        <p>Please not that if you choose Anthropic, Google, FireworksAI, Groq, MistralAI, TogetherAI or HuggingFace, you will have to provide an OpenAI API Key for the embedding model.</p>
 
         <!-- API Key Input -->
         <h3 class="text-lg font-semibold">Enter the LLM API Key</h3>
