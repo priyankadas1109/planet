@@ -165,7 +165,7 @@ export async function pullFromRepo(){
             console.log("Invalid LLM model selected");
     }
 
-    //Instantiate the embedding model if the LLM requires a different API key
+    //Instantiate the OpenAI embedding model if the LLM requires a different API key
     if(needOtherAPIKey){
         const otherAPIKey = document.getElementById('otherApiKey').value;
         embeddings = new OpenAIEmbeddings({
@@ -205,7 +205,7 @@ export async function pullFromRepo(){
             //Handle the hugging face inference here
             answer = "";
             for await (const output of llm.textGenerationStream({
-                model: "google/flan-t5-xxl", //Need to replace this with the model the user chooses
+                model: document.getElementById("huggingFaceModel").value, //Need to replace this with the model the user chooses
                 inputs: 'repeat "one two three four"',
                 parameters: { max_new_tokens: 250 }
               })) {

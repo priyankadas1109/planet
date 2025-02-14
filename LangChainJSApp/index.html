@@ -28,7 +28,7 @@
         <!-- AI Model Selection -->
         <div class="mb-4">
             <h3 class="text-lg font-semibold">Select your Model:</h3>
-            <select id="aiModel">
+            <select id="aiModel" onchange="toggleModelInputs()">
                 <option value="OpenAI">Open AI</option>
                 <option value="Azure">Azure</option>
                 <option value="Anthropic">Anthropic</option>
@@ -40,6 +40,11 @@
                 <option value="TogetherAI">TogetherAI</option>
                 <option value="HuggingFace">HuggingFace</option>
             </select>
+        </div>
+
+        <div id="huggingFaceModelContainer" style="display: none;" class="mb-4">
+            <h3 class="text-lg font-semibold">Enter the Hugging Face Model Name</h3>
+            <input type="text" id="huggingFaceModel" class="w-full p-2 border rounded" placeholder="Enter Hugging Face model name">
         </div>
 
         <p>Please not that if you choose Anthropic, Google, FireworksAI, Groq, MistralAI, TogetherAI or HuggingFace, you will have to provide an OpenAI API Key for the embedding model.</p>
@@ -114,6 +119,18 @@
         }
         loadParams();
     //});
+    </script>
+    <script>
+        function toggleModelInputs() {
+            var aiModel = document.getElementById("aiModel").value;
+            var huggingFaceModelContainer = document.getElementById("huggingFaceModelContainer");
+            
+            if (aiModel === "HuggingFace") {
+                huggingFaceModelContainer.style.display = "block";
+            } else {
+                huggingFaceModelContainer.style.display = "none";
+            }
+        }
     </script>
 </body>
 </html>
