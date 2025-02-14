@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feed View</title>
+
+  <style>
+    #apiFeeds {
+      width: 200px;
+      padding: 8px;
+      font-size: 16px;
+      margin: 10px;
+      background-color: #f0f0f0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f4f4f4;
+    }
+
+    @media (max-width: 760px) {
+      table, th, td {
+        display: block;
+        width: 100%;
+      }
+      td {
+        border-bottom: 1px solid #ddd;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Dropdown menu for selecting feed -->
+  <select id="apiFeeds" onchange="updateFeed(this.value)">
+  </select>
+
+  <div id="resultJson"></div>
+  <div id="resultFull"></div>
+
+  <script>
+    const SPREADSHEET_ID = '1jQTlXWom-pXvyP9zuTcbdluyvpb43hu2h7anxhF5qlQ';  // Your Google Sheets ID
+    const RANGE = 'A2:J';  // Get data from A2 to J columns (assuming feed data starts from A2)
+    const API_KEY = 'AIzaSyC211F_ub1nAGr2Xv-wJGeulMg4nPzG1yE';  // Your Google API key
+
+    // Function to get data from Google Sheets
+    function getGoogleSheetData() {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                populateDropdown(data.values); // Populate dropdown with feed data
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+    // Function to populate the dropdown with feed options
+    function populateDropdown(feedData) {
+        const selectElement = document.getElementById('apiFeeds');
+        selectElement.innerHTML = '';  // Clear existing content
+
+        const defaultOption = document.createElement('option');
+        defaultOption.value = "none";
+        defaultOption.textContent = "Select a feed.......";
+        selectElement.appendChild(defaultOption);
+
+        // Populate dropdown with feeds from Google Sheets
+        feedData.forEach(feed => {
+            const option = document.createElement('option');
+            option.value = feed[0];  // Feed name
+            option.textContent = feed[0]; // Feed name
+            selectElement.appendChild(option);
+        });
+    }
+
+    // When a feed is selected, update the page content
+    function updateFeed(feedValue) {
+        console.log(`Selected feed: ${feedValue}`);
+        fetchFeedDetails(feedValue).then(feedDetails => {
+            if (feedDetails) {
+                const { url, cors } = feedDetails;
+                if (cors === "TRUE") {
+                    console.log('CORS Needed');
+                    fetchWithCORS(url);  // Fetch data via CORS proxy
+                } else {
+                    console.log('No CORS Needed');
+                    fetchData(url);  // Fetch data directly without CORS
+                }
+            }
+        });
+    }
+
+    // Function to fetch feed details from Google Sheet (URL and CORS flag)
+    function fetchFeedDetails(feedValue) {
+        return new Promise((resolve, reject) => {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const feedRow = data.values.find(row => row[0] === feedValue); // Find the feed row by its name
+                    if (feedRow) {
+                        resolve({
+                            url: feedRow[9],  // The URL of the API
+                            cors: feedRow[8]  // The CORS flag (TRUE or FALSE)
+                        });
+                    } else {
+                        reject('Feed not found');
+                    }
+                })
+                .catch(error => reject(error));
+        });
+    }
+
+    // Fetch data using CORS
+    function fetchWithCORS(url) {
+        console.log('CORS Needed URL:', url);
+        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        fetch(proxyUrl + url)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Data from CORS proxy:', data);
+                displayData(data);  // Display the data on the page
+            })
+            .catch(error => {
+                console.error('CORS request failed:', error);
+            });
+    }
+
+    // Fetch data without CORS
+    function fetchData(url) {
+        console.log('No CORS Needed URL:', url);
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Data from direct request:', data);
+                displayData(data);  // Display the data on the page
+            })
+            .catch(error => {
+                console.error('Data request failed:', error);
+            });
+    }
+
+    // Display the fetched data on the page
+    function displayData(data) {
+        const resultJson = document.getElementById('resultJson');
+        resultJson.innerHTML = JSON.stringify(data, null, 2);  // Display the data as formatted JSON
+    }
+
+    // Call the function to get Google Sheet data when the page is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        getGoogleSheetData();  // Fetch data from Google Sheets
+    });
+  </script>
+
+</body>
+</html>
