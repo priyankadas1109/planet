@@ -1,0 +1,138 @@
+document.addEventListener('DOMContentLoaded', (event) => {
+    // 获取页面元素
+    const apiURLInput = document.getElementById('apiURL');
+    const apiKeyInput = document.getElementById('apiKey');
+    const refreshButton = document.getElementById('refreshButton');
+    const corsLink = document.getElementById('corsLink');
+    const apiFeeds = document.getElementById('apiFeeds');
+  
+    // 加载 Google Sheets 数据并填充下拉列表
+    function getGoogleSheetData() {
+      const SPREADSHEET_ID = '1jQTlXWom-pXvyP9zuTcbdluyvpb43hu2h7anxhF5qlQ'; 
+      const RANGE = 'A2:J'; 
+      const API_KEY = 'AIzaSyC211F_ub1nAGr2Xv-wJGeulMg4nPzG1yE'; 
+  
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+  
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          console.log('Success:', data);
+          populateDropdown(data.values);
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    }
+  
+    // 动态填充下拉菜单
+    function populateDropdown(feedData) {
+      const selectElement = document.getElementById('apiFeeds');
+      selectElement.innerHTML = ''; 
+  
+      const defaultOption = document.createElement('option');
+      defaultOption.value = "none";
+      defaultOption.textContent = "Select a feed.......";
+      selectElement.appendChild(defaultOption);
+  
+      feedData.forEach(feed => {
+        const option = document.createElement('option');
+        option.value = feed[0];  
+        option.textContent = feed[0];
+        selectElement.appendChild(option);
+      });
+    }
+  
+    // 根据选定的 Feed 处理数据
+    function updateFeed(feedValue) {
+      console.log(`Selected feed: ${feedValue}`);
+      fetchFeedDetails(feedValue).then(feedDetails => {
+        if (feedDetails) {
+          const { url, cors } = feedDetails;
+          if (cors === "TRUE") {
+            console.log('CORS Needed');
+            displayCORSWarning(url);  // 如果需要CORS，显示提示
+          } else {
+            console.log('No CORS Needed');
+            fetchData(url);  // 如果不需要CORS，直接获取数据
+          }
+        }
+      });
+    }
+  
+    // 获取选定 Feed 的详细信息（URL 和是否需要 CORS）
+    function fetchFeedDetails(feedValue) {
+      return new Promise((resolve, reject) => {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+        fetch(url)
+          .then(response => response.json())
+          .then(data => {
+            const feedRow = data.values.find(row => row[0] === feedValue);
+            if (feedRow) {
+              resolve({
+                url: feedRow[9],  // 获取 URL
+                cors: feedRow[8]  // 获取是否需要 CORS
+              });
+            } else {
+              reject('Feed not found');
+            }
+          })
+          .catch(error => reject(error));
+      });
+    }
+  
+    // 显示 CORS 警告链接
+    function displayCORSWarning(url) {
+      corsLink.style.display = 'block';  // 显示 CORS 提示
+      corsLink.innerHTML = `
+        <span style="color:white;background:#444;padding:8px 20px;margin-right:10px">IMPORTANT</span>
+        <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="passthrough">Turn on CORS passthrough</a> (then refresh this page)
+      `;
+      // 当用户点击链接时，打开 CORS 请求页面
+      window.location.href = 'https://cors-anywhere.herokuapp.com/corsdemo'; 
+    }
+  
+    // 请求数据并处理
+    function fetchData(url) {
+      console.log('CORS no needed URL:', url);
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          console.log('直接请求的数据:', data);
+          displayData(data);
+        })
+        .catch(error => {
+          console.error('数据请求失败:', error);
+        });
+    }
+  
+    // 显示数据
+    function displayData(data) {
+      const resultJson = document.getElementById('resultJson');
+      resultJson.innerHTML = JSON.stringify(data, null, 2);  // 显示 JSON 数据
+    }
+  
+    // 页面加载时获取 Google Sheets 数据
+    document.addEventListener('DOMContentLoaded', function() {
+      getGoogleSheetData();  // 获取数据并更新下拉列表
+    });
+  
+    // 刷新页面并加载数据
+    refreshButton.addEventListener('click', function(event) {
+      const selectedFeed = apiFeeds.value;
+      updateFeed(selectedFeed);
+    });
+  
+    // 页面加载时自动填充下拉列表
+    $(document).ready(function() {
+      var listItems = "";
+      for (var i = 0; i < jsonList.Table.length; i++) {
+        listItems += "<option value='" + jsonList.Table[i].value + "'>" + jsonList.Table[i].name + "</option>";
+      }
+      $("#apiFeeds").html(listItems);
+      displayFeed();
+    });
+  
+    // 初始化下拉列表
+    getGoogleSheetData();
+  });

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feed View</title>
+  <style>
+    #apiFeeds {
+      width: 200px;
+      padding: 8px;
+      font-size: 16px;
+      margin: 10px;
+      background-color: #f0f0f0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+  </style>
+  <div id="corsLink" style="display:none; margin:12px 0 32px 0">
+    <span style="color:white;background:#444;padding:8px 20px;margin-right:10px">IMPORTANT</span> <a href="https://cors-anywhere.herokuapp.com/" target="passthrough">Turn on CORS passthrough</a> (then refresh this page)
+</div>
+</head>
+<body>
+
+  <select id="apiFeeds" onchange="updateFeed(this.value)">
+    <!-- 下拉菜单选项 -->
+  </select>
+
+  <div id="resultJson"></div>
+  <div id="resultFull"></div>
+
+  <script>
+    const SPREADSHEET_ID = '1jQTlXWom-pXvyP9zuTcbdluyvpb43hu2h7anxhF5qlQ';
+    const RANGE = 'A2:J';
+    const API_KEY = 'AIzaSyC211F_ub1nAGr2Xv-wJGeulMg4nPzG1yE';
+
+    // 获取 Google Sheet 数据的函数
+    function getGoogleSheetData() {
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          console.log('Google Sheet 数据:', data);
+          populateDropdown(data.values); // 填充下拉菜单
+        })
+        .catch(error => {
+          console.error('获取 Google Sheet 数据失败:', error);
+        });
+    }
+
+    // 填充下拉菜单的函数
+    function populateDropdown(feedData) {
+      const selectElement = document.getElementById('apiFeeds');
+      selectElement.innerHTML = '';
+      const defaultOption = document.createElement('option');
+      defaultOption.value = "none";
+      defaultOption.textContent = "Select a feed....";
+      selectElement.appendChild(defaultOption);
+
+      feedData.forEach(feed => {
+        const option = document.createElement('option');
+        option.value = feed[0]; // 假设 Feed 名称在第 1 列
+        option.textContent = feed[0];
+        selectElement.appendChild(option);
+      });
+    }
+
+    // 更新 Feed 时的处理函数
+    function updateFeed(feedValue) {
+      console.log(`Selected feed: ${feedValue}`);
+      fetchFeedDetails(feedValue).then(feedDetails => {
+        if (feedDetails) {
+          const { url, cors } = feedDetails;
+          if (cors === "TRUE") {
+            console.log('CORS Needed');
+            displayRequestsCorsAnywhere(url);  // 使用 CORS 代理请求
+          } else {
+            console.log('No CORS Needed');
+            fetchData(url);  // 直接请求数据
+          }
+        }
+      });
+    }
+
+    function displayRequestsCorsAnywhere(urlItem) {
+        $("#resultFull").hide();
+        $("#resultCascase").hide();
+        let errorOutput;
+        const proxyUrl = 'https://cors-anywhere.herokuapp.com/'; // 代理 URL
+
+        // 如果有多个 URL，用 "|" 分隔
+        urlList = urlItem.split('|')
+        urlList.forEach(url => {
+            let urlCombo = proxyUrl + url;  // 拼接代理 URL 和 API URL
+
+            const xhr = new XMLHttpRequest();
+            xhr.open("GET", urlCombo, true);
+
+            xhr.onload = function() {
+            if (xhr.status === 200) {
+                console.log('Success:', xhr.responseText);
+                $("#resultFull").show();
+                // 如果是 RSS 数据，解析 XML 格式
+                if (url.indexOf("/rss") !== -1) {
+                const rssFeed = xhr.responseText;
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(rssFeed, "text/xml");
+                const items = xmlDoc.getElementsByTagName("item");
+                const formattedItems = [];
+
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    const link = item.querySelector("link").textContent;
+                    const description = item.querySelector("description").textContent;
+                    const pubDate = item.querySelector("pubDate").textContent;
+                    const guid = item.querySelector("guid").textContent;
+                    formattedItems.push({
+                    link,
+                    description,
+                    pubDate,
+                    guid
+                    });
+                }
+                // 格式化 RSS 数据并显示
+                const formattedRSS = formatRow("", formattedItems, 0); 
+                $("#resultFull").html(formattedRSS);
+                }
+                else {
+                const formattedOutput = formatRow("", JSON.parse(xhr.responseText), 0);
+                $("#resultFull").html(formattedOutput);
+                }
+            } else {
+                errorOutput = 'Error xhr.status ' + xhr.status + ': ' + xhr.statusText;
+            }
+            };
+
+            if (xhr.status === 403) { // 如果请求失败，显示启用 CORS 的提示
+            $("#corsLink").show();
+            }
+            xhr.send();
+        });
+    }
+
+    // 获取 Feed 的详细信息（URL 和 CORS 设置）
+    function fetchFeedDetails(feedValue) {
+      return new Promise((resolve, reject) => {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+        fetch(url)
+          .then(response => response.json())
+          .then(data => {
+            const feedRow = data.values.find(row => row[0] === feedValue);
+            if (feedRow) {
+              resolve({
+                url: feedRow[9],  // 假设 URL 在第 10 列
+                cors: feedRow[8]  // 假设 CORS 设置在第 9 列
+              });
+            } else {
+              reject('Feed not found');
+            }
+          })
+          .catch(error => reject(error));
+      });
+    }
+
+    // 请求数据（无需 CORS）
+    function fetchData(url) {
+      console.log('CORS No needed URL:', url);
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          console.log('直接请求的数据:', data);
+          displayData(data);  // 显示数据
+        })
+        .catch(error => {
+          console.error('数据请求失败:', error);
+        });
+    }
+
+    // 显示数据
+    function displayData(data) {
+      const resultJson = document.getElementById('resultJson');
+      resultJson.innerHTML = JSON.stringify(data, null, 2);  // 显示 JSON 数据
+    }
+
+    // 页面加载时调用获取 Google Sheet 数据的函数
+    document.addEventListener('DOMContentLoaded', function() {
+      getGoogleSheetData();  // 调用获取数据的函数
+    });
+  </script>
+
+</body>
+</html>
