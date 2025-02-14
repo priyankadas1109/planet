@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feed View</title>
+
+  <style>
+    #apiFeeds {
+      width: 200px;
+      padding: 8px;
+      font-size: 16px;
+      margin: 10px;
+      background-color: #f0f0f0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f4f4f4;
+    }
+
+    @media (max-width: 760px) {
+      table, th, td {
+        display: block;
+        width: 100%;
+      }
+      td {
+        border-bottom: 1px solid #ddd;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <select id="apiFeeds" onchange="updateFeed(this.value)">
+  </select>
+
+  <div id="resultJson"></div>
+  <div id="resultFull"></div>
+
+  <script>
+    const SPREADSHEET_ID = '1jQTlXWom-pXvyP9zuTcbdluyvpb43hu2h7anxhF5qlQ'; 
+    const RANGE = 'A2:J'; 
+    const API_KEY = 'AIzaSyC211F_ub1nAGr2Xv-wJGeulMg4nPzG1yE'; 
+
+    function getGoogleSheetData() {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                populateDropdown(data.values);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+    function populateDropdown(feedData) {
+        const selectElement = document.getElementById('apiFeeds');
+        selectElement.innerHTML = ''; 
+
+        const defaultOption = document.createElement('option');
+        defaultOption.value = "none";
+        defaultOption.textContent = "Select a feed.......";
+        selectElement.appendChild(defaultOption);
+
+        feedData.forEach(feed => {
+            const option = document.createElement('option');
+            option.value = feed[0]; 
+            option.textContent = feed[0];
+            selectElement.appendChild(option);
+        });
+    }
+
+    function updateFeed(feedValue) {
+        console.log(`Selected feed: ${feedValue}`);
+
+        // 获取选择的 feed 所对应的 CORS 设置和 URL
+        fetchFeedDetails(feedValue).then(feedDetails => {
+            if (feedDetails) {
+                const { url, cors } = feedDetails;
+                if (cors === "TRUE") {
+                    console.log('CORS Needed');
+                    fetchWithCORS(url);
+                } else {
+                    console
+                    fetchData(url);
+                }
+            }
+        });
+    }
+
+    function fetchFeedDetails(feedValue) {
+        return new Promise((resolve, reject) => {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const feedRow = data.values.find(row => row[0] === feedValue);
+                    if (feedRow) {
+                        resolve({
+                            url: feedRow[9],  // URL 列
+                            cors: feedRow[8]  // CORS 列
+                        });
+                    } else {
+                        reject('Feed not found');
+                    }
+                })
+                .catch(error => reject(error));
+        });
+    }
+
+    // CORS
+    function fetchWithCORS(url) {
+        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        fetch(proxyUrl + url)
+            .then(response => response.json())
+            .then(data => {
+                console.log('数据来自 CORS 代理:', data);
+                displayData(data);
+            })
+            .catch(error => {
+                console.error('CORS 请求失败:', error);
+            });
+    }
+
+    // No CORS
+    function fetchData(url) {
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                console.log('直接请求的数据:', data);
+                displayData(data);
+            })
+            .catch(error => {
+                console.error('数据请求失败:', error);
+            });
+    }
+
+    // 显示获取到的数据
+    function displayData(data) {
+        const resultJson = document.getElementById('resultJson');
+        resultJson.innerHTML = JSON.stringify(data, null, 2);  // 显示 JSON 数据
+    }
+
+    // 页面加载时调用获取 Google Sheet 数据的函数
+    document.addEventListener('DOMContentLoaded', function() {
+        getGoogleSheetData();  // 调用获取数据的函数
+    });
+
+  </script>
+
+</body>
+</html>

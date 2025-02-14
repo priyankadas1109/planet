@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feed View</title>
+
+  <!-- 直接在页面头部嵌入样式 -->
+  <style>
+    /* 下拉菜单的样式 */
+    #apiFeeds {
+      width: 200px;
+      padding: 8px;
+      font-size: 16px;
+      margin: 10px;
+      background-color: #f0f0f0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    /* 基础表格样式 */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f4f4f4;
+    }
+
+    /* 响应式设计：小屏幕下适应 */
+    @media (max-width: 760px) {
+      table, th, td {
+        display: block;
+        width: 100%;
+      }
+      td {
+        border-bottom: 1px solid #ddd;
+      }
+    }
+  </style>
+</head>
+<body>
+
+
+  <select id="apiFeeds" onchange="updateFeed(this.value)">
+  </select>
+
+  <div id="resultJson"></div>
+  <div id="resultFull"></div>
+
+
+  <script>
+    const SPREADSHEET_ID = '1jQTlXWom-pXvyP9zuTcbdluyvpb43hu2h7anxhF5qlQ';  // 你的 Google Sheets ID
+    const RANGE = 'A2:A';  // 从 A2 开始获取数据（假设 feed 数据从 A2 开始）
+    const API_KEY = 'AIzaSyC211F_ub1nAGr2Xv-wJGeulMg4nPzG1yE';  // 你获得的 Google API 密钥
+
+    // 获取 Google Sheet 数据的函数
+    function getGoogleSheetData() {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Google Sheet 数据:', data);
+                populateDropdown(data.values); // 处理数据并填充下拉菜单
+            })
+            .catch(error => {
+                console.error('获取 Google Sheet 数据失败:', error);
+            });
+    }
+
+    function populateDropdown(feedData) {
+        const selectElement = document.getElementById('apiFeeds');
+        selectElement.innerHTML = '';
+
+
+        const defaultOption = document.createElement('option');
+        defaultOption.value = "none";
+        defaultOption.textContent = "Select a feed.......";
+        selectElement.appendChild(defaultOption);
+
+        feedData.forEach(feed => {
+            const option = document.createElement('option');
+            option.value = feed[0];  
+            option.textContent = feed[0];
+            selectElement.appendChild(option);
+        });
+    }
+
+    function updateFeed(feedValue) {
+        console.log(`Selected feed: ${feedValue}`);
+
+        // 获取选择的 feed 所对应的 CORS 设置和 URL
+        fetchFeedDetails(feedValue).then(feedDetails => {
+            if (feedDetails) {
+                const { url, cors } = feedDetails;
+                if (cors === "TRUE") {
+                    // 使用 CORS 代理
+                    fetchWithCORS(url);
+                } else {
+                    // 不需要 CORS，直接请求
+                    fetchData(url);
+                }
+            }
+        });
+    }
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        getGoogleSheetData();  // 调用获取数据的函数
+    });
+  </script>
+
+</body>
+</html>

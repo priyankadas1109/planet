@@ -1,0 +1,85 @@
+const SPREADSHEET_ID = '1jQTlXWom-pXvyP9zuTcbdluyvpb43hu2h7anxhF5qlQ';  // 你的 Google Sheets ID
+const RANGE = 'A2:A';  // 从 A2 开始获取数据（假设 feed 数据从 A2 开始）
+const API_KEY = 'AIzaSyC211F_ub1nAGr2Xv-wJGeulMg4nPzG1yE';  // 你获得的 Google API 密钥
+
+// 获取 Google Sheet 数据的函数
+function getGoogleSheetData() {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Google Sheet 数据:', data);
+            populateDropdown(data.values); // 处理数据并填充下拉菜单
+        })
+        .catch(error => {
+            console.error('获取 Google Sheet 数据失败:', error);
+        });
+}
+
+// 动态填充下拉菜单的函数
+function populateDropdown(feedData) {
+    const selectElement = document.getElementById('apiFeeds');
+    selectElement.innerHTML = '';
+
+    const defaultOption = document.createElement('option');
+    defaultOption.value = "none";
+    defaultOption.textContent = "Select a feed.......";
+    selectElement.appendChild(defaultOption);
+
+    feedData.forEach(feed => {
+        const option = document.createElement('option');
+        option.value = feed[0];  // 使用 Google Sheet 中的第一列作为 Feed 名称
+        option.textContent = feed[0];
+        selectElement.appendChild(option);
+    });
+}
+
+// 当选择某个 feed 时，更新页面内容
+function updateFeed(feedValue) {
+    console.log(`Selected feed: ${feedValue}`);
+
+    const selectedFeed = jsonList.Table.find(feed => feed.value === feedValue);
+    
+    if (selectedFeed) {
+        if (selectedFeed.cors === "TRUE") {
+            fetchWithCORS(selectedFeed.url); // 使用 CORS 代理请求数据
+        } else {
+            fetchData(selectedFeed.url); // 直接请求数据
+        }
+    }
+}
+
+// 使用 CORS 代理请求数据
+function fetchWithCORS(url) {
+    fetch(`https://cors-anywhere.herokuapp.com/${url}`)
+        .then(response => response.json())
+        .then(data => {
+            displayData(data);
+        })
+        .catch(error => {
+            console.error('CORS 请求失败:', error);
+        });
+}
+
+// 直接请求数据
+function fetchData(url) {
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            displayData(data);
+        })
+        .catch(error => {
+            console.error('请求数据失败:', error);
+        });
+}
+
+// 展示数据
+function displayData(data) {
+    document.getElementById('resultJson').innerHTML = JSON.stringify(data, null, 2);
+}
+
+// 初始化页面
+document.addEventListener('DOMContentLoaded', function() {
+    getGoogleSheetData();  // 调用获取数据的函数
+});

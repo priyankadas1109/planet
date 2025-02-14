@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feed View</title>
+
+  <!-- 直接在页面头部嵌入样式 -->
+  <style>
+    /* 下拉菜单的样式 */
+    #apiFeeds {
+      width: 200px;
+      padding: 8px;
+      font-size: 16px;
+      margin: 10px;
+      background-color: #f0f0f0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    /* 基础表格样式 */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f4f4f4;
+    }
+
+    /* 响应式设计：小屏幕下适应 */
+    @media (max-width: 760px) {
+      table, th, td {
+        display: block;
+        width: 100%;
+      }
+      td {
+        border-bottom: 1px solid #ddd;
+      }
+    }
+  </style>
+</head>
+<body>
+
+
+  <select id="apiFeeds" onchange="updateFeed(this.value)">
+  </select>
+
+  <div id="resultJson"></div>
+  <div id="resultFull"></div>
+
+
+  <script>
+    
+  </script>
+
+</body>
+</html>
