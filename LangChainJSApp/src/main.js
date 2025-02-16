@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to check if another API key is needed
     function checkOtherAPIKeyRequirement() {
         const service = chosenService.value;
-        const needsOtherAPIKey = ["Anthropic", "Google", "FireworksAI", "Groq", "MistralAI", "TogetherAI"].includes(service);
+        const needsOtherAPIKey = ["Anthropic", "Google", "FireworksAI", "Groq", "MistralAI", "TogetherAI", "HuggingFace"].includes(service);
 
         // Show or hide the other API key field accordingly
         if (needsOtherAPIKey) {

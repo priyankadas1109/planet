@@ -5,31 +5,23 @@
     <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LangChain.js RAG Demo</title>
-
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Omits base.css load in localsite.js until changes made. -->
-    <script id="/localsite/css/base.css"></script>
-
-    <script type="text/javascript" src="https://model.earth/localsite/js/jquery.min.js" id="/localsite/js/jquery.min.js"></script>
-    <script type="text/javascript" src="https://model.earth/localsite/js/localsite.js?showheader=false"></script>
     <style>
-    h3 {
-        margin-bottom: 0px !important;
-        font-weight: bolder !important;
-    }
+        h3 {
+            margin-bottom: 4px !important;
+            font-weight: bold !important;
+        }
     </style>
-
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div style="margin-left:62px !important" class="max-w-2xl w-full bg-white shadow-lg rounded-lg p-6">
-        <h1 class="text-2xl font-bold text-center mb-4">RAG Query System</h1>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
+    <div class="max-w-3xl w-full bg-white shadow-xl rounded-lg p-8 border border-gray-200">
+        <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">RAG Query System</h1>
 
         <!-- AI Model Selection -->
-        <div class="mb-4">
-            <h3 class="text-lg font-semibold">Select your Model:</h3>
-            <select id="aiModel" onchange="toggleModelInputs()">
-                <option value="OpenAI">Open AI</option>
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-700">Select your Model:</h3>
+            <select id="aiModel" onchange="toggleModelInputs()" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300">
+                <option value="OpenAI">OpenAI</option>
                 <option value="Azure">Azure</option>
                 <option value="Anthropic">Anthropic</option>
                 <option value="Google">Google</option>
@@ -42,94 +34,56 @@
             </select>
         </div>
 
-        <div id="huggingFaceModelContainer" style="display: none;" class="mb-4">
-            <h3 class="text-lg font-semibold">Enter the Hugging Face Model Name</h3>
-            <input type="text" id="huggingFaceModel" class="w-full p-2 border rounded" placeholder="Enter Hugging Face model name">
-        </div>
+        <p class="text-sm text-gray-600 mb-4">If you choose Anthropic, Google, FireworksAI, Groq, MistralAI, TogetherAI, or HuggingFace, you must provide an OpenAI API Key for the embedding model.</p>
 
-        <p>Please not that if you choose Anthropic, Google, FireworksAI, Groq, MistralAI, TogetherAI or HuggingFace, you will have to provide an OpenAI API Key for the embedding model.</p>
-
-        <!-- API Key Input -->
-        <h3 class="text-lg font-semibold">Enter the LLM API Key</h3>
-        <div class="mb-4">
-            <textarea id="apiKey" class="w-full p-2 border rounded" placeholder="Enter your LLM's API key"></textarea>
-        </div>
-
-        <div id="otherApiKeyContainer" style="display: none;">
-            <label for="otherApiKey">Please enter an OpenAI API Key for the embedding model</label>
-            <input type="text" id="otherApiKey" name="otherApiKey">
+        <div id="huggingFaceModelContainer" class="mb-4 hidden">
+            <h3 class="text-lg font-semibold text-gray-700">Enter Hugging Face Model Name</h3>
+            <input type="text" id="huggingFaceModel" class="w-full p-2 border rounded-md" placeholder="Enter Hugging Face model name">
         </div>
         
+        <!-- API Key Input -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-700">Enter the LLM API Key</h3>
+            <textarea id="apiKey" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300" placeholder="Enter your LLM's API key"></textarea>
+        </div>
+
+        <div id="otherApiKeyContainer" class="mb-6 hidden">
+            <h3 class="text-lg font-semibold text-gray-700">Enter OpenAI API Key</h3>
+            <input type="text" id="otherApiKey" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300" placeholder="Enter OpenAI API Key">
+        </div>
 
         <!-- GitHub Token Input -->
-        <h3 class="text-lg font-semibold">Enter your Github personal access token</h3>
-        <div class="mb-4">
-            <textarea id="githubToken" class="w-full p-2 border rounded" placeholder="Enter your GitHub Personal Access Token"></textarea>
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-700">Enter GitHub Personal Access Token</h3>
+            <textarea id="githubToken" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300" placeholder="Enter your GitHub token"></textarea>
         </div>
 
         <!-- Document Source Selection -->
-        <div class="mt-4">
-            <h3 class="text-lg font-semibold">Document Source</h3>
-            <select id="sourceType" class="w-full p-2 border rounded mt-2">
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-700">Document Source</h3>
+            <select id="sourceType" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300 mt-2">
                 <option value="single">Single Document</option>
                 <option value="folder">GitHub Folder</option>
                 <option value="repo">Entire GitHub Repository</option>
             </select>
-
-            <!-- GitHub URL Input -->
-            <h3 class="text-lg font-semibold">Enter the Github URL</h3>
-            <input id="sourceUrl" type="text" placeholder="Enter GitHub URL"
-                class="w-full p-2 border rounded mt-2">
-            <div id="loadStatus" class="text-sm text-gray-600 mt-2"></div>
+            <h3 class="text-lg font-semibold text-gray-700 mt-4">Enter GitHub URL</h3>
+            <input id="sourceUrl" type="text" placeholder="Enter GitHub URL" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300 mt-2">
         </div>
 
         <!-- User Query Input -->
-        <div class="mt-4">
-            <textarea id="userQuery" class="w-full p-2 border rounded" placeholder="Enter your question based on the data source"></textarea>
-            <button id="submitButton" class="w-full bg-green-500 text-white py-2 rounded mt-2 hover:bg-green-600">
-                Submit Query
-            </button>
+        <div class="mb-6">
+            <textarea id="userQuery" class="w-full p-3 border rounded-md focus:ring focus:ring-green-300" placeholder="Enter your question based on the data source"></textarea>
+            <button id="submitButton" class="w-full bg-green-500 text-white py-3 rounded-md mt-4 hover:bg-green-600 transition">Submit Query</button>
         </div>
 
-        <div id="response" class="mt-4 p-4 bg-gray-200 rounded whitespace-pre-wrap"></div>
+        <div id="response" class="mt-4 p-4 bg-gray-200 rounded-md text-gray-800 whitespace-pre-wrap"></div>
     </div>
-    <script>
-        function toggleOpenAIModels() {
-            var aiModel = document.getElementById("aiModel").value;
-            var openAIModelsContainer = document.getElementById("openAIModelsContainer");
-        
-            if (aiModel === "OpenAI") {
-                openAIModelsContainer.style.display = "block";
-            } else {
-                openAIModelsContainer.style.display = "none";
-            }
-        }
-    </script>
+
     <script type="module" src="src/main.js"></script>
-    <script>
-
-    // Waits for $ within jquery.min.js file to become available.
-    //var waitForJQuery = setInterval(function () { 
-
-        function loadParams() {
-            let hash = getHash();
-            if (hash.prompt) {
-                $("#userQuery").text(hash.prompt);
-            }
-        }
-        loadParams();
-    //});
-    </script>
     <script>
         function toggleModelInputs() {
             var aiModel = document.getElementById("aiModel").value;
-            var huggingFaceModelContainer = document.getElementById("huggingFaceModelContainer");
-            
-            if (aiModel === "HuggingFace") {
-                huggingFaceModelContainer.style.display = "block";
-            } else {
-                huggingFaceModelContainer.style.display = "none";
-            }
+            document.getElementById("huggingFaceModelContainer").style.display = aiModel === "HuggingFace" ? "block" : "none";
         }
     </script>
 </body>
