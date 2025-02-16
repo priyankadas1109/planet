@@ -72,7 +72,6 @@ export async function pullFromRepo(){
     switch(chosenService){
         case "OpenAI":
             //Need OpenAI Api Key
-            chosenLLM = document.getElementById("openAIModel").value;
             llm = new ChatOpenAI({
                 model: "gpt-4o-mini",
                 temperature: 0,
