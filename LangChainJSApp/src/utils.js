@@ -52,7 +52,7 @@ export async function fetchRepoContentsFromUrl(repoUrl, urlType, githubToken){
  */
 export async function fetchRepoContents(owner, repo, branch, path = "", token) {
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
-    const headers = token ? { Authorization: `token ${token}` } : {};
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
     
     try {
         const response = await fetch(url, { headers });
@@ -84,7 +84,7 @@ export async function fetchRepoContents(owner, repo, branch, path = "", token) {
  * @returns the content of the file
  */
 export async function fetchFileContent(fileUrl, token = null) {
-    const headers = token ? { Authorization: `token ${token}` } : {};
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
     try {
         const response = await fetch(fileUrl, { headers });
@@ -110,7 +110,7 @@ export async function convertToLangChainDocs(owner, repo, branch, token = null) 
     const documents = [];
     for (const file of files) {
         if (file.url) { // Ensure the file has a valid download URL
-            const content = await fetchFileContent(file.download_url, token);
+            const content = await fetchFileContent(file.url, token);
             if (content) {
                 documents.push(
                     new Document({

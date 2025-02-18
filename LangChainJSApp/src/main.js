@@ -177,12 +177,12 @@ export async function pullFromRepo(){
 
     try{
         const urlType = document.getElementById('sourceType').value;
-        const contents = await fetchRepoContentsFromUrl(repoUrl, urlType);
+        const contents = await fetchRepoContentsFromUrl(repoUrl, urlType, githubToken);
         console.log("Contents:", contents);
         // Run the documents through the splitter
         const splitter = new RecursiveCharacterTextSplitter({
-            chunkSize:2000,
-            chunkOverlap:200
+            chunkSize:1000,
+            chunkOverlap:100
         });
 
         const allSplits = await splitter.splitDocuments(contents);
