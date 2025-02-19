@@ -25,7 +25,7 @@ import { fetchRepoContentsFromUrl } from "./utils";
  */
 async function generateResponse(context, query, llm) {
     const promptTemplate = ChatPromptTemplate.fromTemplate(`
-        You are an expert assistant answering questions related to the repository data pulled from a GitHub repository.
+        You are an expert assistant answering questions related to the data pulled from a GitHub repository.
         Use the following context to answer the query:
 
         Context:
@@ -36,6 +36,8 @@ async function generateResponse(context, query, llm) {
 
         Provide a detailed, accurate response based on the context provided.
         If you're unsure about something, please say so.
+        If the question is unrelated to the context, please say that the question is unrelated or something
+        along the lines of that
         
         Answer:
     `);

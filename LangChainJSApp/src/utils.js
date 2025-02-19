@@ -112,9 +112,11 @@ export async function convertToLangChainDocs(owner, repo, branch, token = null) 
         if (file.url) { // Ensure the file has a valid download URL
             const content = await fetchFileContent(file.url, token);
             if (content) {
+                const parsedData = JSON.parse(content);
+                const decodedContent = atob(parsedData.content);
                 documents.push(
                     new Document({
-                        pageContent: content,
+                        pageContent: decodedContent,
                         metadata: {
                             source: file.path, // Add file path as metadata
                             url: file.html_url, // Optionally add GitHub URL
