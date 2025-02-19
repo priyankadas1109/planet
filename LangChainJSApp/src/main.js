@@ -68,7 +68,6 @@ export async function pullFromRepo(){
     let llm;
     let embeddings;
     let needOtherAPIKey = false;
-    let chosenLLM;
     let huggingface = false;
 
     switch(chosenService){

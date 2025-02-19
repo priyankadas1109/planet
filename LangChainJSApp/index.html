@@ -61,13 +61,24 @@
         <!-- Document Source Selection -->
         <div class="mb-6">
             <h3 class="text-lg font-semibold text-gray-700">Document Source</h3>
-            <select id="sourceType" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300 mt-2">
-                <option value="single">Single Document</option>
-                <option value="folder">GitHub Folder</option>
-                <option value="repo">Entire GitHub Repository</option>
+            <select id="sourceType" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300 mt-2" onchange="toggleSourceInput()">
+            <option value="single">Single File</option>
+            <option value="folder">GitHub Folder</option>
+            <option value="repo">Entire GitHub Repository</option>
+            <option value="feedAPI">Feed API</option>
             </select>
-            <h3 class="text-lg font-semibold text-gray-700 mt-4">Enter GitHub URL</h3>
+            <div id="sourceUrlContainer" class="mt-4">
+            <h3 class="text-lg font-semibold text-gray-700">Enter GitHub URL</h3>
             <input id="sourceUrl" type="text" placeholder="Enter GitHub URL" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300 mt-2">
+            </div>
+            <div id="feedApiContainer" class="mt-4 hidden">
+            <h3 class="text-lg font-semibold text-gray-700">Select Feed API</h3>
+            <select id="feedApi" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300 mt-2">
+                <option value="api1">Feed API 1</option>
+                <option value="api2">Feed API 2</option>
+                <option value="api3">Feed API 3</option>
+            </select>
+            </div>
         </div>
 
         <!-- User Query Input -->
@@ -84,6 +95,21 @@
         function toggleModelInputs() {
             var aiModel = document.getElementById("aiModel").value;
             document.getElementById("huggingFaceModelContainer").style.display = aiModel === "HuggingFace" ? "block" : "none";
+        }
+    </script>
+    <script>
+        function toggleSourceInput() {
+        var sourceType = document.getElementById("sourceType").value;
+        var sourceUrlContainer = document.getElementById("sourceUrlContainer");
+        var feedApiContainer = document.getElementById("feedApiContainer");
+
+        if (sourceType === "feedAPI") {
+            sourceUrlContainer.style.display = "none";
+            feedApiContainer.style.display = "block";
+        } else {
+            sourceUrlContainer.style.display = "block";
+            feedApiContainer.style.display = "none";
+        }
         }
     </script>
 </body>
