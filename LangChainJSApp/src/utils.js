@@ -4,7 +4,7 @@ import { Document } from "@langchain/core/documents";
  * @param {*} repoUrl The url of the repository from which to fetch the contents
  * @returns the content of the repository
  */
-export async function fetchRepoContentsFromUrl(repoUrl, urlType){
+export async function fetchRepoContentsFromUrl(repoUrl, urlType, githubToken){
     try{
         let contents = [];
         if(urlType == 'repo'){
@@ -12,7 +12,7 @@ export async function fetchRepoContentsFromUrl(repoUrl, urlType){
             if(!match) throw new Error("Invalid GitHub repository URL");
             const owner = match[1];
             const repo = match[2];
-            contents = await convertToLangChainDocs(owner, repo, "main");
+            contents = await convertToLangChainDocs(owner, repo, "main", githubToken);
         } else if(urlType == 'folder'){
             const match = repoUrl.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/tree\/([^\/]+)\/(.+)/);
             if (!match) throw new Error("Invalid GitHub folder URL");
@@ -20,7 +20,7 @@ export async function fetchRepoContentsFromUrl(repoUrl, urlType){
             const repo = match[2];
             const branch = match[3];
             const folderPath = match[4];
-            contents = await fetchRepoContents(owner, repo, branch, folderPath);
+            contents = await fetchRepoContents(owner, repo, branch, folderPath, githubToken);
         } else if(urlType == 'single'){
             const match = repoUrl.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/blob\/([^\/]+)\/(.+)/);
             if (!match) throw new Error("Invalid GitHub file URL");
@@ -50,9 +50,9 @@ export async function fetchRepoContentsFromUrl(repoUrl, urlType){
  * @param {*} token 
  * @returns A list of jsons containing the contents of the repository
  */
-export async function fetchRepoContents(owner, repo, branch, path = "", token = null) {
+export async function fetchRepoContents(owner, repo, branch, path = "", token) {
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
-    const headers = token ? { Authorization: `token ${token}` } : {};
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
     
     try {
         const response = await fetch(url, { headers });
@@ -84,7 +84,7 @@ export async function fetchRepoContents(owner, repo, branch, path = "", token = 
  * @returns the content of the file
  */
 export async function fetchFileContent(fileUrl, token = null) {
-    const headers = token ? { Authorization: `token ${token}` } : {};
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
     try {
         const response = await fetch(fileUrl, { headers });
@@ -110,11 +110,13 @@ export async function convertToLangChainDocs(owner, repo, branch, token = null) 
     const documents = [];
     for (const file of files) {
         if (file.url) { // Ensure the file has a valid download URL
-            const content = await fetchFileContent(file.download_url, token);
+            const content = await fetchFileContent(file.url, token);
             if (content) {
+                const parsedData = JSON.parse(content);
+                const decodedContent = atob(parsedData.content);
                 documents.push(
                     new Document({
-                        pageContent: content,
+                        pageContent: decodedContent,
                         metadata: {
                             source: file.path, // Add file path as metadata
                             url: file.html_url, // Optionally add GitHub URL

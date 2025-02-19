@@ -8,6 +8,7 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatCohere, CohereEmbeddings } from "@langchain/cohere";
 import { ChatGroq } from "@langchain/groq";
 import { MistralAI } from "@langchain/mistralai";
+import { HfInference } from "@huggingface/inference";
 
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
@@ -24,7 +25,7 @@ import { fetchRepoContentsFromUrl } from "./utils";
  */
 async function generateResponse(context, query, llm) {
     const promptTemplate = ChatPromptTemplate.fromTemplate(`
-        You are an expert assistant answering questions related to the repository data pulled from a GitHub repository.
+        You are an expert assistant answering questions related to the data pulled from a GitHub repository.
         Use the following context to answer the query:
 
         Context:
@@ -35,6 +36,8 @@ async function generateResponse(context, query, llm) {
 
         Provide a detailed, accurate response based on the context provided.
         If you're unsure about something, please say so.
+        If the question is unrelated to the context, please say that the question is unrelated or something
+        along the lines of that
         
         Answer:
     `);
@@ -66,10 +69,11 @@ export async function pullFromRepo(){
     let embeddings;
     let needOtherAPIKey = false;
     let chosenLLM;
+    let huggingface = false;
+
     switch(chosenService){
         case "OpenAI":
             //Need OpenAI Api Key
-            chosenLLM = document.getElementById("openAIModel").value;
             llm = new ChatOpenAI({
                 model: "gpt-4o-mini",
                 temperature: 0,
@@ -152,10 +156,17 @@ export async function pullFromRepo(){
                 apiKey: apiKey
             });
             needOtherAPIKey = true;
-            //Need another API key for embedding
+        case "HuggingFace":
+            llm = new HfInference({
+                apiKey: apiKey,
+            });
+            needOtherAPIKey = true;
+            huggingface = true;
         default:
             console.log("Invalid LLM model selected");
     }
+
+    //Instantiate the OpenAI embedding model if the LLM requires a different API key
     if(needOtherAPIKey){
         const otherAPIKey = document.getElementById('otherApiKey').value;
         embeddings = new OpenAIEmbeddings({
@@ -163,15 +174,17 @@ export async function pullFromRepo(){
             apiKey: otherAPIKey
         });
     }
+
     const vectorStore = new MemoryVectorStore(embeddings);
+
     try{
         const urlType = document.getElementById('sourceType').value;
-        const contents = await fetchRepoContentsFromUrl(repoUrl, urlType);
+        const contents = await fetchRepoContentsFromUrl(repoUrl, urlType, githubToken);
         console.log("Contents:", contents);
         // Run the documents through the splitter
         const splitter = new RecursiveCharacterTextSplitter({
-            chunkSize:10000,
-            chunkOverlap:2000
+            chunkSize:1000,
+            chunkOverlap:100
         });
 
         const allSplits = await splitter.splitDocuments(contents);
@@ -181,12 +194,25 @@ export async function pullFromRepo(){
 
         const query = document.getElementById('userQuery').value;
 
-        const topMatches = await vectorStore.similaritySearch(query, 5);
+        const topMatches = await vectorStore.similaritySearch(query, 3);
         console.log("Top matches:", topMatches);
         const context = topMatches.map((doc, i) => `Source ${i + 1}: ${doc.metadata.source}\n${doc.pageContent}`).join("\n\n");
         console.log("Context:", context);
         console.log("Query:", query);
-        const answer = await generateResponse(context, query, llm);
+        let answer = "";
+        if(!huggingface){
+            answer = await generateResponse(context, query, llm);
+        } else{
+            //Handle the hugging face inference here
+            answer = "";
+            for await (const output of llm.textGenerationStream({
+                model: document.getElementById("huggingFaceModel").value, //Need to replace this with the model the user chooses
+                inputs: 'repeat "one two three four"',
+                parameters: { max_new_tokens: 250 }
+              })) {
+                answer += output.generated_text;
+            }
+        }
         document.getElementById('response').innerText = answer;
 
     } catch(e){
@@ -194,13 +220,34 @@ export async function pullFromRepo(){
     }
 }
 
-// Event listener Javascript code
-document.addEventListener('DOMContentLoaded', () => {
-    // Get references to HTML elements
-    const button = document.getElementById('submitButton');
 
-    // Add click event listener to the button
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('submitButton');
+    const chosenService = document.getElementById('aiModel');
+    const otherApiKeyField = document.getElementById('otherApiKeyContainer'); // Div or input container
+
+    // Function to check if another API key is needed
+    function checkOtherAPIKeyRequirement() {
+        const service = chosenService.value;
+        const needsOtherAPIKey = ["Anthropic", "Google", "FireworksAI", "Groq", "MistralAI", "TogetherAI", "HuggingFace"].includes(service);
+
+        // Show or hide the other API key field accordingly
+        if (needsOtherAPIKey) {
+            otherApiKeyField.style.display = "block";
+        } else {
+            otherApiKeyField.style.display = "none";
+        }
+    }
+
+    // Listen for model selection change
+    chosenService.addEventListener('change', checkOtherAPIKeyRequirement);
+
+    // Execute function on page load in case the dropdown is preselected
+    checkOtherAPIKeyRequirement();
+
+    // Add event listener for the button
     button.addEventListener('click', () => {
         pullFromRepo();
     });
 });
+
