@@ -16,16 +16,14 @@ import { RunnableSequence } from "@langchain/core/runnables";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { fetchRepoContentsFromUrl } from "./utils";
 
+// Variable to store the context data
 var pulledData;
 
 /**
- * Method to get the response from the LLM 
- * @param {*} context the context for the RAG process
- * @param {*} query the query asked by the user
- * @param {*} llm the llm to be used for the query
+ * Method to generate the reposnse based on the context and user query
  * @returns returns the result of the query based on the context
  */
-async function generateResponse(context, query, llm) {
+async function generateResponse() {
     const apiKey = document.getElementById('apiKey').value;
     const chosenService = document.getElementById("aiModel").value;
     let llm;
@@ -158,7 +156,34 @@ async function generateResponse(context, query, llm) {
     console.log("Query:", query);
     let answer = "";
     if(!huggingface){
-        answer = await generateResponse(context, query, llm);
+        const promptTemplate = ChatPromptTemplate.fromTemplate(`
+            You are an expert assistant answering questions related to the data pulled from a GitHub repository.
+            Use the following context to answer the query:
+    
+            Context:
+            {context}
+    
+            Query:
+            {query}
+    
+            Provide a detailed, accurate response based on the context provided.
+            If you're unsure about something, please say so.
+            If the question is unrelated to the context, please say that the question is unrelated or something
+            along the lines of that
+            
+            Answer:
+        `);
+    
+        const chain = RunnableSequence.from([
+            promptTemplate,
+            llm,
+        ]);
+    
+        const response = await chain.invoke({
+            context,
+            query,
+        });
+        answer = response.content;
     } else{
         //Handle the hugging face inference here
         answer = "";
@@ -171,44 +196,14 @@ async function generateResponse(context, query, llm) {
         }
     }
     document.getElementById('response').innerText = answer;
-
-    const promptTemplate = ChatPromptTemplate.fromTemplate(`
-        You are an expert assistant answering questions related to the data pulled from a GitHub repository.
-        Use the following context to answer the query:
-
-        Context:
-        {context}
-
-        Query:
-        {query}
-
-        Provide a detailed, accurate response based on the context provided.
-        If you're unsure about something, please say so.
-        If the question is unrelated to the context, please say that the question is unrelated or something
-        along the lines of that
-        
-        Answer:
-    `);
-
-    const chain = RunnableSequence.from([
-        promptTemplate,
-        llm,
-    ]);
-
-    const response = await chain.invoke({
-        context,
-        query,
-    });
-
     return response.content;
 }
 
 
 /**
- * Method to pull content from the repository and answer the query
+ * Method to pull content from the repository and use it as context to answer the query
  */
-export async function pullFromRepo(){
-    let files = [];
+async function pullFromRepo(){
     const githubToken = document.getElementById('githubToken').value;
     const repoUrl = document.getElementById('sourceUrl').value;
 
@@ -221,6 +216,13 @@ export async function pullFromRepo(){
     }
 }
 
+/**
+ * Method to pull content from the API feed and use it as context to answer the query
+ */
+async function pullFromAPIFeed(){
+
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
     const submitButton = document.getElementById('submitButton');
@@ -228,6 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chosenService = document.getElementById('aiModel');
     const otherApiKeyField = document.getElementById('otherApiKeyContainer'); // Div or input container
     const sourceType = document.getElementById('sourceType');
+    const contextBtn = document.getElementById('contextBtn');
 
     // Function to check if another API key is needed
     function checkOtherAPIKeyRequirement() {
@@ -242,23 +245,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    //Function primarily for debugging purposes
+    function checkContext(){
+        console.log(pulledData);
+    }
+
+    contextBtn.addEventListener('click', checkContext);
+
     // Listen for model selection change
     chosenService.addEventListener('change', checkOtherAPIKeyRequirement);
 
     // Execute function on page load in case the dropdown is preselected
     checkOtherAPIKeyRequirement();
 
-    loadDataButton.addEventListener('click', () => {
+    loadDataButton.addEventListener('click',async () => {
         if(sourceType.value == 'feedAPI'){
+            
             //Add code to pull context from the feed API
         } else{
-
+            await pullFromRepo();
         }
     });
 
     // Add event listener for the button
-    submitButton.addEventListener('click', () => {
-        pullFromRepo();
+    submitButton.addEventListener('click', async () => {
+        await generateResponse();
     });
 });
 
