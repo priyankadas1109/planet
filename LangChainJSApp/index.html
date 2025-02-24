@@ -61,17 +61,42 @@
         <!-- Document Source Selection -->
         <div class="mb-6">
             <h3 class="text-lg font-semibold text-gray-700">Document Source</h3>
-            <select id="sourceType" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300 mt-2">
-                <option value="single">Single Document</option>
-                <option value="folder">GitHub Folder</option>
-                <option value="repo">Entire GitHub Repository</option>
+            <select id="sourceType" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300 mt-2" onchange="toggleSourceInput()">
+            <option value="single">Single File</option>
+            <option value="folder">GitHub Folder</option>
+            <option value="repo">Entire GitHub Repository</option>
+            <option value="feedAPI">Feed API</option>
             </select>
-            <h3 class="text-lg font-semibold text-gray-700 mt-4">Enter GitHub URL</h3>
+            <div id="sourceUrlContainer" class="mt-4">
+            <h3 class="text-lg font-semibold text-gray-700">Enter GitHub URL</h3>
             <input id="sourceUrl" type="text" placeholder="Enter GitHub URL" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300 mt-2">
+            </div>
+            <div id="feedApiContainer" class="mt-4 hidden">
+                <h3 class="text-lg font-semibold text-gray-700">Select Feed API</h3>
+                <select id="apiFeeds" onchange="updateFeed(this.value)" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300 mt-2">
+                </select>
+                <div id="resultJson"></div>
+                <div id="resultFull"></div>
+              
+                <!-- CORS alert -->
+                <div id="corsLink">
+                  <span>IMPORTANT</span>
+                  <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="passthrough" onclick="alert('Remember to refresh the page after enabling CORS passthrough!')">Turn on CORS passthrough</a> (then refresh this page)
+                </div>
+            </div>
+        </div>
+        <!--Button for debugging purposes-->
+        <button id="contextBtn">Press me to see the context!</button>
+        <div class="mb-4 text-red-500 font-semibold">
+            IMPORTANT: Please click the "Load the Data Source" button before submitting your query.
+        </div>
+        <div>
+            <button id="loadData" class="w-full bg-blue-500 text-white py-3 rounded-md mb-4 hover:bg-blue-600 transition">Load the Data Source</button>
         </div>
 
         <!-- User Query Input -->
         <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-700">Enter your Query</h3>
             <textarea id="userQuery" class="w-full p-3 border rounded-md focus:ring focus:ring-green-300" placeholder="Enter your question based on the data source"></textarea>
             <button id="submitButton" class="w-full bg-green-500 text-white py-3 rounded-md mt-4 hover:bg-green-600 transition">Submit Query</button>
         </div>
@@ -80,10 +105,27 @@
     </div>
 
     <script type="module" src="src/main.js"></script>
+    <script type="module" src="src/feedutils.js"></script>
+
+
+<!--Functions to handle toggling of inputs-->
     <script>
         function toggleModelInputs() {
             var aiModel = document.getElementById("aiModel").value;
             document.getElementById("huggingFaceModelContainer").style.display = aiModel === "HuggingFace" ? "block" : "none";
+        }
+        function toggleSourceInput() {
+        var sourceType = document.getElementById("sourceType").value;
+        var sourceUrlContainer = document.getElementById("sourceUrlContainer");
+        var feedApiContainer = document.getElementById("feedApiContainer");
+
+        if (sourceType === "feedAPI") {
+            sourceUrlContainer.style.display = "none";
+            feedApiContainer.style.display = "block";
+        } else {
+            sourceUrlContainer.style.display = "block";
+            feedApiContainer.style.display = "none";
+        }
         }
     </script>
 </body>

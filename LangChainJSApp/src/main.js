@@ -16,59 +16,19 @@ import { RunnableSequence } from "@langchain/core/runnables";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { fetchRepoContentsFromUrl } from "./utils";
 
+// Variable to store the context data
+var pulledData;
+
 /**
- * Method to get the response from the LLM 
- * @param {*} context the context for the RAG process
- * @param {*} query the query asked by the user
- * @param {*} llm the llm to be used for the query
+ * Method to generate the reposnse based on the context and user query
  * @returns returns the result of the query based on the context
  */
-async function generateResponse(context, query, llm) {
-    const promptTemplate = ChatPromptTemplate.fromTemplate(`
-        You are an expert assistant answering questions related to the data pulled from a GitHub repository.
-        Use the following context to answer the query:
-
-        Context:
-        {context}
-
-        Query:
-        {query}
-
-        Provide a detailed, accurate response based on the context provided.
-        If you're unsure about something, please say so.
-        If the question is unrelated to the context, please say that the question is unrelated or something
-        along the lines of that
-        
-        Answer:
-    `);
-
-    const chain = RunnableSequence.from([
-        promptTemplate,
-        llm,
-    ]);
-
-    const response = await chain.invoke({
-        context,
-        query,
-    });
-
-    return response.content;
-}
-
-
-/**
- * Method to pull content from the repository and answer the query
- */
-export async function pullFromRepo(){
-    let files = [];
-    const githubToken = document.getElementById('githubToken').value;
-    const repoUrl = document.getElementById('sourceUrl').value;
+async function generateResponse() {
     const apiKey = document.getElementById('apiKey').value;
     const chosenService = document.getElementById("aiModel").value;
     let llm;
     let embeddings;
     let needOtherAPIKey = false;
-    let chosenLLM;
     let huggingface = false;
 
     switch(chosenService){
@@ -177,54 +137,100 @@ export async function pullFromRepo(){
 
     const vectorStore = new MemoryVectorStore(embeddings);
 
+    const splitter = new RecursiveCharacterTextSplitter({
+        chunkSize:1000,
+        chunkOverlap:100
+    });
+
+    const allSplits = await splitter.splitDocuments(pulledData);
+    console.log("Splitted Documents:", allSplits);
+    // Add documents to vector store directly without separate embedding step
+    await vectorStore.addDocuments(allSplits);
+
+    const query = document.getElementById('userQuery').value;
+
+    const topMatches = await vectorStore.similaritySearch(query, 3);
+    console.log("Top matches:", topMatches);
+    const context = topMatches.map((doc, i) => `Source ${i + 1}: ${doc.metadata.source}\n${doc.pageContent}`).join("\n\n");
+    console.log("Context:", context);
+    console.log("Query:", query);
+    let answer = "";
+    if(!huggingface){
+        const promptTemplate = ChatPromptTemplate.fromTemplate(`
+            You are an expert assistant answering questions related to the data pulled from a GitHub repository.
+            Use the following context to answer the query:
+    
+            Context:
+            {context}
+    
+            Query:
+            {query}
+    
+            Provide a detailed, accurate response based on the context provided.
+            If you're unsure about something, please say so.
+            If the question is unrelated to the context, please say that the question is unrelated or something
+            along the lines of that
+            
+            Answer:
+        `);
+    
+        const chain = RunnableSequence.from([
+            promptTemplate,
+            llm,
+        ]);
+    
+        const response = await chain.invoke({
+            context,
+            query,
+        });
+        answer = response.content;
+    } else{
+        //Handle the hugging face inference here
+        answer = "";
+        for await (const output of llm.textGenerationStream({
+            model: document.getElementById("huggingFaceModel").value, //Need to replace this with the model the user chooses
+            inputs: 'repeat "one two three four"',
+            parameters: { max_new_tokens: 250 }
+          })) {
+            answer += output.generated_text;
+        }
+    }
+    document.getElementById('response').innerText = answer;
+    return response.content;
+}
+
+
+/**
+ * Method to pull content from the repository and use it as context to answer the query
+ */
+async function pullFromRepo(){
+    const githubToken = document.getElementById('githubToken').value;
+    const repoUrl = document.getElementById('sourceUrl').value;
+
     try{
         const urlType = document.getElementById('sourceType').value;
-        const contents = await fetchRepoContentsFromUrl(repoUrl, urlType, githubToken);
-        console.log("Contents:", contents);
-        // Run the documents through the splitter
-        const splitter = new RecursiveCharacterTextSplitter({
-            chunkSize:1000,
-            chunkOverlap:100
-        });
-
-        const allSplits = await splitter.splitDocuments(contents);
-        console.log("Splitted Documents:", allSplits);
-        // Add documents to vector store directly without separate embedding step
-        await vectorStore.addDocuments(allSplits);
-
-        const query = document.getElementById('userQuery').value;
-
-        const topMatches = await vectorStore.similaritySearch(query, 3);
-        console.log("Top matches:", topMatches);
-        const context = topMatches.map((doc, i) => `Source ${i + 1}: ${doc.metadata.source}\n${doc.pageContent}`).join("\n\n");
-        console.log("Context:", context);
-        console.log("Query:", query);
-        let answer = "";
-        if(!huggingface){
-            answer = await generateResponse(context, query, llm);
-        } else{
-            //Handle the hugging face inference here
-            answer = "";
-            for await (const output of llm.textGenerationStream({
-                model: document.getElementById("huggingFaceModel").value, //Need to replace this with the model the user chooses
-                inputs: 'repeat "one two three four"',
-                parameters: { max_new_tokens: 250 }
-              })) {
-                answer += output.generated_text;
-            }
-        }
-        document.getElementById('response').innerText = answer;
-
+        pulledData = await fetchRepoContentsFromUrl(repoUrl, urlType, githubToken);
+        console.log("Contents:", pulledData);
     } catch(e){
         console.log("Error loading documents:", e);
     }
 }
 
+/**
+ * Method to pull content from the API feed and use it as context to answer the query
+ */
+async function pullFromAPIFeed(){
+
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
-    const button = document.getElementById('submitButton');
+    const submitButton = document.getElementById('submitButton');
+    const loadDataButton = document.getElementById('loadData');
     const chosenService = document.getElementById('aiModel');
     const otherApiKeyField = document.getElementById('otherApiKeyContainer'); // Div or input container
+    const sourceType = document.getElementById('sourceType');
+    const contextBtn = document.getElementById('contextBtn');
 
     // Function to check if another API key is needed
     function checkOtherAPIKeyRequirement() {
@@ -239,15 +245,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    //Function primarily for debugging purposes
+    function checkContext(){
+        console.log(pulledData);
+    }
+
+    contextBtn.addEventListener('click', checkContext);
+
     // Listen for model selection change
     chosenService.addEventListener('change', checkOtherAPIKeyRequirement);
 
     // Execute function on page load in case the dropdown is preselected
     checkOtherAPIKeyRequirement();
 
+    loadDataButton.addEventListener('click',async () => {
+        if(sourceType.value == 'feedAPI'){
+            
+            //Add code to pull context from the feed API
+        } else{
+            await pullFromRepo();
+        }
+    });
+
     // Add event listener for the button
-    button.addEventListener('click', () => {
-        pullFromRepo();
+    submitButton.addEventListener('click', async () => {
+        await generateResponse();
     });
 });
 
