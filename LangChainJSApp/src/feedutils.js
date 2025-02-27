@@ -204,3 +204,14 @@ document.addEventListener('click', function(event) {
         alert("CORS passthrough enabled. Please refresh the page.");
     }
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    const feedSelector = document.getElementById('apiFeeds');
+
+    feedSelector.addEventListener('change', () => {
+        const selectedFeed = feedSelector.value;
+        if (selectedFeed !== 'none') {
+            updateFeed(selectedFeed);
+        }
+    });
+});

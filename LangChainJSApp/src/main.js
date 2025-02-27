@@ -220,7 +220,7 @@ async function pullFromRepo(){
  * Method to pull content from the API feed and use it as context to answer the query
  */
 async function pullFromAPIFeed(){
-
+    
 }
 
 
@@ -260,8 +260,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadDataButton.addEventListener('click',async () => {
         if(sourceType.value == 'feedAPI'){
-            
             //Add code to pull context from the feed API
+            await pullFromAPIFeed();
         } else{
             await pullFromRepo();
         }
