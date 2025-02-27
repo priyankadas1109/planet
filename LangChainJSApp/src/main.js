@@ -8,7 +8,7 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatCohere, CohereEmbeddings } from "@langchain/cohere";
 import { ChatGroq } from "@langchain/groq";
 import { MistralAI } from "@langchain/mistralai";
-import { HfInference } from "@huggingface/inference";
+import { textGeneration } from "@huggingface/inference";
 
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
@@ -116,12 +116,11 @@ async function generateResponse() {
                 apiKey: apiKey
             });
             needOtherAPIKey = true;
+            break;
         case "HuggingFace":
-            llm = new HfInference({
-                apiKey: apiKey,
-            });
             needOtherAPIKey = true;
             huggingface = true;
+            break;
         default:
             console.log("Invalid LLM model selected");
     }
@@ -154,9 +153,7 @@ async function generateResponse() {
     const context = topMatches.map((doc, i) => `Source ${i + 1}: ${doc.metadata.source}\n${doc.pageContent}`).join("\n\n");
     console.log("Context:", context);
     console.log("Query:", query);
-    let answer = "";
-    if(!huggingface){
-        const promptTemplate = ChatPromptTemplate.fromTemplate(`
+    const prompt = `
             You are an expert assistant answering questions related to the data pulled from a GitHub repository.
             Use the following context to answer the query:
     
@@ -172,7 +169,13 @@ async function generateResponse() {
             along the lines of that
             
             Answer:
-        `);
+        `;
+    
+    const encodedPrompt = encodeURIComponent(prompt);
+
+    let answer = "";
+    if(!huggingface){
+        const promptTemplate = ChatPromptTemplate.fromTemplate(prompt);
     
         const chain = RunnableSequence.from([
             promptTemplate,
@@ -186,14 +189,28 @@ async function generateResponse() {
         answer = response.content;
     } else{
         //Handle the hugging face inference here
-        answer = "";
-        for await (const output of llm.textGenerationStream({
-            model: document.getElementById("huggingFaceModel").value, //Need to replace this with the model the user chooses
-            inputs: 'repeat "one two three four"',
-            parameters: { max_new_tokens: 250 }
-          })) {
-            answer += output.generated_text;
-        }
+        // answer = "";
+        // for await (const output of llm.textGenerationStream({
+        //     model: document.getElementById("huggingFaceModel").value, //Need to replace this with the model the user chooses
+        //     inputs: prompt,
+        //     parameters: { max_new_tokens: 250 }
+        //   })) {
+        //     answer += output.token.text;
+        // }
+
+        (async () => {
+            try {
+                const response = await textGeneration({
+                    accessToken: document.getElementById('apiKey').value,
+                    model: document.getElementById('huggingFaceModel').value,  // Replace with a valid model name
+                    inputs: encodedPrompt,
+                    parameters: { max_new_tokens: 50 }
+                });
+                console.log(response);
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        })();
     }
     document.getElementById('response').innerText = answer;
     return response.content;
