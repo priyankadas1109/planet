@@ -171,7 +171,6 @@ async function generateResponse() {
             Answer:
         `;
     
-    const encodedPrompt = encodeURIComponent(prompt);
 
     let answer = "";
     if(!huggingface){
@@ -200,20 +199,21 @@ async function generateResponse() {
 
         (async () => {
             try {
+                const modifiedPrompt = prompt.replace("{context}", context).replace("{query}", query);
                 const response = await textGeneration({
                     accessToken: document.getElementById('apiKey').value,
                     model: document.getElementById('huggingFaceModel').value,  // Replace with a valid model name
-                    inputs: encodedPrompt,
+                    inputs: modifiedPrompt,
                     parameters: { max_new_tokens: 50 }
                 });
-                console.log(response);
+                answer = response.generated_text;
             } catch (error) {
                 console.error("Error:", error);
             }
         })();
     }
     document.getElementById('response').innerText = answer;
-    return response.content;
+    return answer;
 }
 
 
