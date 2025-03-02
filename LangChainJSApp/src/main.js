@@ -8,7 +8,7 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatCohere, CohereEmbeddings } from "@langchain/cohere";
 import { ChatGroq } from "@langchain/groq";
 import { MistralAI } from "@langchain/mistralai";
-import { HfInference } from "@huggingface/inference";
+import { textGeneration } from "@huggingface/inference";
 
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
@@ -116,12 +116,11 @@ async function generateResponse() {
                 apiKey: apiKey
             });
             needOtherAPIKey = true;
+            break;
         case "HuggingFace":
-            llm = new HfInference({
-                apiKey: apiKey,
-            });
             needOtherAPIKey = true;
             huggingface = true;
+            break;
         default:
             console.log("Invalid LLM model selected");
     }
@@ -154,9 +153,7 @@ async function generateResponse() {
     const context = topMatches.map((doc, i) => `Source ${i + 1}: ${doc.metadata.source}\n${doc.pageContent}`).join("\n\n");
     console.log("Context:", context);
     console.log("Query:", query);
-    let answer = "";
-    if(!huggingface){
-        const promptTemplate = ChatPromptTemplate.fromTemplate(`
+    const prompt = `
             You are an expert assistant answering questions related to the data pulled from a GitHub repository.
             Use the following context to answer the query:
     
@@ -172,7 +169,12 @@ async function generateResponse() {
             along the lines of that
             
             Answer:
-        `);
+        `;
+    
+
+    let answer = "";
+    if(!huggingface){
+        const promptTemplate = ChatPromptTemplate.fromTemplate(prompt);
     
         const chain = RunnableSequence.from([
             promptTemplate,
@@ -185,18 +187,22 @@ async function generateResponse() {
         });
         answer = response.content;
     } else{
-        //Handle the hugging face inference here
-        answer = "";
-        for await (const output of llm.textGenerationStream({
-            model: document.getElementById("huggingFaceModel").value, //Need to replace this with the model the user chooses
-            inputs: 'repeat "one two three four"',
-            parameters: { max_new_tokens: 250 }
-          })) {
-            answer += output.generated_text;
+        //Huggingface API call
+        try {
+            const modifiedPrompt = prompt.replace("{context}", context).replace("{query}", query);
+            const response = await textGeneration({
+                accessToken: document.getElementById('apiKey').value,
+                model: document.getElementById('huggingFaceModel').value,  // Replace with a valid model name
+                inputs: modifiedPrompt,
+                parameters: { max_new_tokens: 50 }
+            });
+            answer = response.generated_text;
+        } catch (error) {
+            console.error("Error:", error);
         }
     }
     document.getElementById('response').innerText = answer;
-    return response.content;
+    return answer;
 }
 
 
@@ -220,7 +226,7 @@ async function pullFromRepo(){
  * Method to pull content from the API feed and use it as context to answer the query
  */
 async function pullFromAPIFeed(){
-
+    
 }
 
 
@@ -258,13 +264,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Execute function on page load in case the dropdown is preselected
     checkOtherAPIKeyRequirement();
 
-    loadDataButton.addEventListener('click',async () => {
-        if(sourceType.value == 'feedAPI'){
-            
-            //Add code to pull context from the feed API
-        } else{
-            await pullFromRepo();
+    loadDataButton.addEventListener('click', async () => {
+        loadDataButton.innerHTML = `<span class="animate-spin mr-2">⏳</span> Loading...`;
+        loadDataButton.disabled = true; // Disable the button to prevent multiple clicks
+    
+        try {
+            if (sourceType.value === 'feedAPI') {
+                await pullFromAPIFeed();
+            } else {
+                await pullFromRepo();
+            }
+        } catch (error) {
+            console.error('Error loading data:', error);
         }
+    
+        loadDataButton.innerHTML = "Load the Data Source"; // Restore original text
+        loadDataButton.disabled = false; // Re-enable the button
     });
 
     // Add event listener for the button
