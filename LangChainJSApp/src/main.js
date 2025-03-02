@@ -187,30 +187,19 @@ async function generateResponse() {
         });
         answer = response.content;
     } else{
-        //Handle the hugging face inference here
-        // answer = "";
-        // for await (const output of llm.textGenerationStream({
-        //     model: document.getElementById("huggingFaceModel").value, //Need to replace this with the model the user chooses
-        //     inputs: prompt,
-        //     parameters: { max_new_tokens: 250 }
-        //   })) {
-        //     answer += output.token.text;
-        // }
-
-        (async () => {
-            try {
-                const modifiedPrompt = prompt.replace("{context}", context).replace("{query}", query);
-                const response = await textGeneration({
-                    accessToken: document.getElementById('apiKey').value,
-                    model: document.getElementById('huggingFaceModel').value,  // Replace with a valid model name
-                    inputs: modifiedPrompt,
-                    parameters: { max_new_tokens: 50 }
-                });
-                answer = response.generated_text;
-            } catch (error) {
-                console.error("Error:", error);
-            }
-        })();
+        //Huggingface API call
+        try {
+            const modifiedPrompt = prompt.replace("{context}", context).replace("{query}", query);
+            const response = await textGeneration({
+                accessToken: document.getElementById('apiKey').value,
+                model: document.getElementById('huggingFaceModel').value,  // Replace with a valid model name
+                inputs: modifiedPrompt,
+                parameters: { max_new_tokens: 50 }
+            });
+            answer = response.generated_text;
+        } catch (error) {
+            console.error("Error:", error);
+        }
     }
     document.getElementById('response').innerText = answer;
     return answer;
@@ -275,13 +264,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Execute function on page load in case the dropdown is preselected
     checkOtherAPIKeyRequirement();
 
-    loadDataButton.addEventListener('click',async () => {
-        if(sourceType.value == 'feedAPI'){
-            //Add code to pull context from the feed API
-            await pullFromAPIFeed();
-        } else{
-            await pullFromRepo();
+    loadDataButton.addEventListener('click', async () => {
+        loadDataButton.innerHTML = `<span class="animate-spin mr-2">⏳</span> Loading...`;
+        loadDataButton.disabled = true; // Disable the button to prevent multiple clicks
+    
+        try {
+            if (sourceType.value === 'feedAPI') {
+                await pullFromAPIFeed();
+            } else {
+                await pullFromRepo();
+            }
+        } catch (error) {
+            console.error('Error loading data:', error);
         }
+    
+        loadDataButton.innerHTML = "Load the Data Source"; // Restore original text
+        loadDataButton.disabled = false; // Re-enable the button
     });
 
     // Add event listener for the button

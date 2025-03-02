@@ -67,10 +67,14 @@
             <option value="repo">Entire GitHub Repository</option>
             <option value="feedAPI">Feed API</option>
             </select>
+
+            <!-- Single File Input -->
             <div id="sourceUrlContainer" class="mt-4">
             <h3 class="text-lg font-semibold text-gray-700">Enter GitHub URL</h3>
             <input id="sourceUrl" type="text" placeholder="Enter GitHub URL" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300 mt-2">
             </div>
+
+            <!-- Feed API Selection -->
             <div id="feedApiContainer" class="mt-4 hidden">
                 <h3 class="text-lg font-semibold text-gray-700">Select Feed API</h3>
 
@@ -86,7 +90,10 @@
                   <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="passthrough" onclick="alert('Remember to refresh the page after enabling CORS passthrough!')">Turn on CORS passthrough</a> (then refresh this page)
                 </div>
             </div>
+
+            
         </div>
+        
         <!--Button for debugging purposes-->
         <button id="contextBtn">Press me to see the context!</button>
         <div class="mb-4 text-red-500 font-semibold">
