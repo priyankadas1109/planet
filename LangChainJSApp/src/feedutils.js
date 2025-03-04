@@ -1,9 +1,10 @@
+// feedutils.js
 const SPREADSHEET_ID = '1jQTlXWom-pXvyP9zuTcbdluyvpb43hu2h7anxhF5qlQ';  // Google Sheets ID
 const RANGE = 'A2:J';  // Data range
 const API_KEY = 'AIzaSyC211F_ub1nAGr2Xv-wJGeulMg4nPzG1yE';  // API key
 
 // Get Google Sheets data
-function getGoogleSheetData() {
+export function getGoogleSheetData() {
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
     fetch(url)
         .then(response => response.json())
@@ -17,7 +18,7 @@ function getGoogleSheetData() {
 }
 
 // Populate dropdown menu
-function populateDropdown(feedData) {
+export function populateDropdown(feedData) {
     const selectElement = document.getElementById('apiFeeds');
     selectElement.innerHTML = '';
 
@@ -42,7 +43,7 @@ function populateDropdown(feedData) {
 }
 
 // Update feed
-function fetchWithCORS(url) {
+export function fetchWithCORS(url) {
     console.log('Making CORS request to:', url);  // Print requested URL
     const proxyUrl = 'https://cors-anywhere.herokuapp.com/';  // Use CORS proxy
 
@@ -73,7 +74,7 @@ function fetchWithCORS(url) {
 }
 
 // Parse RSS (XML) data
-function parseRSS(xmlData) {
+export function parseRSS(xmlData) {
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlData, "text/xml");
 
@@ -103,13 +104,13 @@ function parseRSS(xmlData) {
 }
 
 // Display data (either RSS or JSON)
-function displayData(data) {
+export function displayData(data) {
     const resultJson = document.getElementById('resultJson');
     resultJson.innerHTML = JSON.stringify(data, null, 2);  // Display JSON data
 }
 
 // Update feed
-function updateFeed(feedValue) {
+export function updateFeed(feedValue) {
     console.log(`Selected feed: ${feedValue}`);
 
     // Clear previous data
@@ -138,17 +139,17 @@ function updateFeed(feedValue) {
 }
 
 // Show CORS alert
-function showCORSLink() {
+export function showCORSLink() {
     document.getElementById('corsLink').style.display = 'block';  // Show CORS alert
 }
 
 // Hide CORS alert
-function hideCORSLink() {
+export function hideCORSLink() {
     document.getElementById('corsLink').style.display = 'none';  // Hide CORS alert
 }
 
 // Fetch feed details
-function fetchFeedDetails(feedValue) {
+export function fetchFeedDetails(feedValue) {
     return new Promise((resolve, reject) => {
         const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
         fetch(url)
@@ -168,13 +169,12 @@ function fetchFeedDetails(feedValue) {
     });
 }
 
-// Show CORS alert
-function showCORSLink() {
-    document.getElementById('corsLink').style.display = 'block';  // Show CORS alert
-}
-
 // Request data (no CORS)
-function fetchData(url) {
+/**
+ * Method also displays data
+ * @param {*} url url to fetch data from
+ */
+export function fetchData(url) {
     console.log('CORS not needed URL:', url);
     fetch(url)
         .then(response => response.json())
@@ -187,13 +187,7 @@ function fetchData(url) {
         });
 }
 
-// Display data
-function displayData(data) {
-    const resultJson = document.getElementById('resultJson');
-    resultJson.innerHTML = JSON.stringify(data, null, 2);  // Display JSON data
-}
-
-// Call the function to fetch Google Sheet data when the page is loaded
+// Set up event listeners
 document.addEventListener('DOMContentLoaded', function() {
     getGoogleSheetData();  // Fetch data from Google Sheet
 });
@@ -203,15 +197,4 @@ document.addEventListener('click', function(event) {
     if (event.target.id === 'corsLink' && event.target.tagName === 'A') {
         alert("CORS passthrough enabled. Please refresh the page.");
     }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    const feedSelector = document.getElementById('apiFeeds');
-
-    feedSelector.addEventListener('change', () => {
-        const selectedFeed = feedSelector.value;
-        if (selectedFeed !== 'none') {
-            updateFeed(selectedFeed);
-        }
-    });
 });
