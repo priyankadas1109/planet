@@ -111,17 +111,16 @@
         <div id="response" class="mt-4 p-4 bg-gray-200 rounded-md text-gray-800 whitespace-pre-wrap"></div>
     </div>
     
+    <script type="module" src="src/main.js"></script>
     <script type="module">
         import { 
             getGoogleSheetData, 
             updateFeed 
-        } from './src/feedutils.js';
+        } from './src/main.js';
 
         // Expose updateFeed to the global window object
         window.updateFeed = updateFeed;
     </script>
-    <script type="module" src="src/main.js"></script>
-    <script type="module" src="src/feedutils.js"></script>
 
 
 <!--Functions to handle toggling of inputs-->
