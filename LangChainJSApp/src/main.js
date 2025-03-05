@@ -1,4 +1,4 @@
-//Import statements for all the different chat models and their embeddings
+// Core API integrations and models
 import { OpenAIEmbeddings, ChatOpenAI, AzureChatOpenAI, AzureOpenAIEmbeddings } from "@langchain/openai";
 import { ChatXAI } from "@langchain/xai";
 import { ChatAnthropic } from "@langchain/anthropic";
@@ -10,20 +10,26 @@ import { ChatGroq } from "@langchain/groq";
 import { MistralAI } from "@langchain/mistralai";
 import { textGeneration } from "@huggingface/inference";
 
+// LangChain utilities
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { fetchRepoContentsFromUrl } from "./utils";
 
-// Variable to store the context data
-var pulledData;
+// Global variables
+let pulledData;
+
+// Google Sheets API constants
+const SPREADSHEET_ID = '1jQTlXWom-pXvyP9zuTcbdluyvpb43hu2h7anxhF5qlQ';
+const RANGE = 'A2:J';
+const API_KEY = 'AIzaSyC211F_ub1nAGr2Xv-wJGeulMg4nPzG1yE';
 
 /**
- * Method to generate the reposnse based on the context and user query
- * @returns returns the result of the query based on the context
+ * Initializes an LLM based on the user's selection
+ * @returns {Object} Object containing the LLM and embeddings model
  */
-async function generateResponse() {
+function initializeLLM() {
     const apiKey = document.getElementById('apiKey').value;
     const chosenService = document.getElementById("aiModel").value;
     let llm;
@@ -31,9 +37,8 @@ async function generateResponse() {
     let needOtherAPIKey = false;
     let huggingface = false;
 
-    switch(chosenService){
+    switch(chosenService) {
         case "OpenAI":
-            //Need OpenAI Api Key
             llm = new ChatOpenAI({
                 model: "gpt-4o-mini",
                 temperature: 0,
@@ -49,7 +54,6 @@ async function generateResponse() {
                 model: "claude-3-5-sonnet-20240620",
                 apiKey: apiKey
             });
-            //Need another API key for embedding
             needOtherAPIKey = true;
             break;
         case "Azure":
@@ -68,7 +72,6 @@ async function generateResponse() {
                 temperature: 0,
                 apiKey: apiKey
             });
-            //Need another API key for embedding
             needOtherAPIKey = true;
             break;
         case "Cohere":
@@ -87,7 +90,6 @@ async function generateResponse() {
                 temperature: 0,
                 apiKey: apiKey
             });
-            //Need another API key for embedding
             needOtherAPIKey = true;
             break;
         case "Groq":
@@ -96,7 +98,6 @@ async function generateResponse() {
                 temperature: 0,
                 apiKey: apiKey
             });
-            //Need another API key for embedding
             needOtherAPIKey = true;
             break;
         case "MistralAI":
@@ -105,10 +106,8 @@ async function generateResponse() {
                 temperature: 0,
                 apiKey: apiKey
             });
-            //Need another API key for embedding
             needOtherAPIKey = true;
             break;
-        //This is a langchian community LLM
         case "TogetherAI":
             llm = new TogetherAI({
                 model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
@@ -125,8 +124,8 @@ async function generateResponse() {
             console.log("Invalid LLM model selected");
     }
 
-    //Instantiate the OpenAI embedding model if the LLM requires a different API key
-    if(needOtherAPIKey){
+    // Handle models requiring separate embedding API key
+    if(needOtherAPIKey) {
         const otherAPIKey = document.getElementById('otherApiKey').value;
         embeddings = new OpenAIEmbeddings({
             model: "text-embedding-3-small",
@@ -134,65 +133,84 @@ async function generateResponse() {
         });
     }
 
-    const vectorStore = new MemoryVectorStore(embeddings);
+    return { llm, embeddings, huggingface };
+}
 
+/**
+ * Main method to generate responses based on context and user query
+ * @returns {Promise<string>} The generated response
+ */
+async function generateResponse() {
+    // Initialize LLM and embeddings
+    const { llm, embeddings, huggingface } = initializeLLM();
+    
+    // Create vector store and split documents
+    const vectorStore = new MemoryVectorStore(embeddings);
     const splitter = new RecursiveCharacterTextSplitter({
-        chunkSize:1000,
-        chunkOverlap:100
+        chunkSize: 1000,
+        chunkOverlap: 100
     });
 
+    // Process and store documents
     const allSplits = await splitter.splitDocuments(pulledData);
     console.log("Splitted Documents:", allSplits);
-    // Add documents to vector store directly without separate embedding step
     await vectorStore.addDocuments(allSplits);
 
+    // Get user query and find similar documents
     const query = document.getElementById('userQuery').value;
-
     const topMatches = await vectorStore.similaritySearch(query, 3);
     console.log("Top matches:", topMatches);
-    const context = topMatches.map((doc, i) => `Source ${i + 1}: ${doc.metadata.source}\n${doc.pageContent}`).join("\n\n");
+    
+    // Format context from matches
+    const context = topMatches.map((doc, i) => 
+        `Source ${i + 1}: ${doc.metadata.source}\n${doc.pageContent}`
+    ).join("\n\n");
+    
     console.log("Context:", context);
     console.log("Query:", query);
+    
+    // Define the prompt template
     const prompt = `
-            You are an expert assistant answering questions related to the data pulled from a GitHub repository.
-            Use the following context to answer the query:
-    
-            Context:
-            {context}
-    
-            Query:
-            {query}
-    
-            Provide a detailed, accurate response based on the context provided.
-            If you're unsure about something, please say so.
-            If the question is unrelated to the context, please say that the question is unrelated or something
-            along the lines of that
-            
-            Answer:
-        `;
-    
+        You are an expert assistant answering questions related to the data pulled from a GitHub repository.
+        Use the following context to answer the query:
+
+        Context:
+        {context}
+
+        Query:
+        {query}
+
+        Provide a detailed, accurate response based on the context provided.
+        If you're unsure about something, please say so.
+        If the question is unrelated to the context, please say that the question is unrelated or something
+        along the lines of that
+        
+        Answer:
+    `;
 
     let answer = "";
-    if(!huggingface){
-        const promptTemplate = ChatPromptTemplate.fromTemplate(prompt);
     
+    // Handle different model types
+    if(!huggingface) {
+        // Use LangChain for most models
+        const promptTemplate = ChatPromptTemplate.fromTemplate(prompt);
         const chain = RunnableSequence.from([
             promptTemplate,
             llm,
         ]);
-    
+        
         const response = await chain.invoke({
             context,
             query,
         });
         answer = response.content;
-    } else{
-        //Huggingface API call
+    } else {
+        // Use Huggingface API directly
         try {
             const modifiedPrompt = prompt.replace("{context}", context).replace("{query}", query);
             const response = await textGeneration({
                 accessToken: document.getElementById('apiKey').value,
-                model: document.getElementById('huggingFaceModel').value,  // Replace with a valid model name
+                model: document.getElementById('huggingFaceModel').value,
                 inputs: modifiedPrompt,
                 parameters: { max_new_tokens: 50 }
             });
@@ -201,103 +219,40 @@ async function generateResponse() {
             console.error("Error:", error);
         }
     }
+    
+    // Display the answer
     document.getElementById('response').innerText = answer;
     return answer;
 }
 
+/**
+ * Data Source Methods
+ */
 
 /**
- * Method to pull content from the repository and use it as context to answer the query
+ * Pull content from a GitHub repository
  */
-async function pullFromRepo(){
+async function pullFromRepo() {
     const githubToken = document.getElementById('githubToken').value;
     const repoUrl = document.getElementById('sourceUrl').value;
 
-    try{
+    try {
         const urlType = document.getElementById('sourceType').value;
         pulledData = await fetchRepoContentsFromUrl(repoUrl, urlType, githubToken);
         console.log("Contents:", pulledData);
-    } catch(e){
+    } catch(e) {
         console.log("Error loading documents:", e);
     }
 }
 
 /**
- * Method to pull content from the API feed and use it as context to answer the query
+ * Google Sheets API Methods
  */
-async function pullFromAPIFeed(){
-    
-}
 
-
-document.addEventListener('DOMContentLoaded', () => {
-    const submitButton = document.getElementById('submitButton');
-    const loadDataButton = document.getElementById('loadData');
-    const chosenService = document.getElementById('aiModel');
-    const otherApiKeyField = document.getElementById('otherApiKeyContainer'); // Div or input container
-    const sourceType = document.getElementById('sourceType');
-    const contextBtn = document.getElementById('contextBtn');
-
-    // Function to check if another API key is needed
-    function checkOtherAPIKeyRequirement() {
-        const service = chosenService.value;
-        const needsOtherAPIKey = ["Anthropic", "Google", "FireworksAI", "Groq", "MistralAI", "TogetherAI", "HuggingFace"].includes(service);
-
-        // Show or hide the other API key field accordingly
-        if (needsOtherAPIKey) {
-            otherApiKeyField.style.display = "block";
-        } else {
-            otherApiKeyField.style.display = "none";
-        }
-    }
-
-    //Function primarily for debugging purposes
-    function checkContext(){
-        console.log(pulledData);
-    }
-
-    contextBtn.addEventListener('click', checkContext);
-
-    // Listen for model selection change
-    chosenService.addEventListener('change', checkOtherAPIKeyRequirement);
-
-    // Execute function on page load in case the dropdown is preselected
-    checkOtherAPIKeyRequirement();
-
-    loadDataButton.addEventListener('click', async () => {
-        loadDataButton.innerHTML = `<span class="animate-spin mr-2">⏳</span> Loading...`;
-        loadDataButton.disabled = true; // Disable the button to prevent multiple clicks
-    
-        try {
-            if (sourceType.value === 'feedAPI') {
-                await pullFromAPIFeed();
-            } else {
-                await pullFromRepo();
-            }
-        } catch (error) {
-            console.error('Error loading data:', error);
-        }
-    
-        loadDataButton.innerHTML = "Load the Data Source"; // Restore original text
-        loadDataButton.disabled = false; // Re-enable the button
-    });
-
-    // Add event listener for the button
-    submitButton.addEventListener('click', async () => {
-        await generateResponse();
-    });
-});
-
-
-
-
-// feedutils.js
-const SPREADSHEET_ID = '1jQTlXWom-pXvyP9zuTcbdluyvpb43hu2h7anxhF5qlQ';  // Google Sheets ID
-const RANGE = 'A2:J';  // Data range
-const API_KEY = 'AIzaSyC211F_ub1nAGr2Xv-wJGeulMg4nPzG1yE';  // API key
-
-// Get Google Sheets data
-export function getGoogleSheetData() {
+/**
+ * Fetches data from Google Sheets API
+ */
+function getGoogleSheetData() {
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
     fetch(url)
         .then(response => response.json())
@@ -310,8 +265,11 @@ export function getGoogleSheetData() {
         });
 }
 
-// Populate dropdown menu
-export function populateDropdown(feedData) {
+/**
+ * Populates dropdown with feed options
+ * @param {Array} feedData Array of feed data from Google Sheets
+ */
+function populateDropdown(feedData) {
     const selectElement = document.getElementById('apiFeeds');
     selectElement.innerHTML = '';
 
@@ -335,39 +293,49 @@ export function populateDropdown(feedData) {
     }
 }
 
-// Update feed
-export function fetchWithCORS(url) {
-    console.log('Making CORS request to:', url);  // Print requested URL
-    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';  // Use CORS proxy
+/**
+ * CORS and Data Fetching Methods
+ */
+
+/**
+ * Fetches data using CORS proxy
+ * @param {string} url The URL to fetch data from
+ */
+function fetchWithCORS(url) {
+    console.log('Making CORS request to:', url);
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
 
     fetch(proxyUrl + url)
         .then(response => {
-            console.log('CORS Response Status:', response.status);  // Print HTTP status
-            return response.text();  // Use text() to get response content (for RSS)
+            console.log('CORS Response Status:', response.status);
+            return response.text();
         })
         .then(data => {
-            console.log('CORS Response Data:', data);  // Print returned data
+            console.log('CORS Response Data:', data);
 
             // Check if it is RSS format (XML)
             if (data.startsWith("<?xml")) {
                 console.log("Received XML data, parsing...");
-                parseRSS(data);  // Call the parsing function for XML
+                parseRSS(data);
             } else {
                 try {
-                    const jsonData = JSON.parse(data);  // If it is JSON data
-                    displayData(jsonData);  // Display JSON data
+                    const jsonData = JSON.parse(data);
+                    displayData(jsonData);
                 } catch (error) {
-                    console.error("Error parsing JSON:", error);  // Error parsing JSON
+                    console.error("Error parsing JSON:", error);
                 }
             }
         })
         .catch(error => {
-            console.error('CORS request failed:', error);  // Print request error
+            console.error('CORS request failed:', error);
         });
 }
 
-// Parse RSS (XML) data
-export function parseRSS(xmlData) {
+/**
+ * Parses RSS/XML data
+ * @param {string} xmlData XML data to parse
+ */
+function parseRSS(xmlData) {
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlData, "text/xml");
 
@@ -391,19 +359,24 @@ export function parseRSS(xmlData) {
         });
     }
 
-    // Print parsed items
     console.log("Parsed RSS Items:", formattedItems);
-    displayData(formattedItems);  // Display RSS data
+    displayData(formattedItems);
 }
 
-// Display data (either RSS or JSON)
-export function displayData(data) {
+/**
+ * Displays data in the UI
+ * @param {Object} data Data to display
+ */
+function displayData(data) {
     const resultJson = document.getElementById('resultJson');
-    resultJson.innerHTML = JSON.stringify(data, null, 2);  // Display JSON data
+    resultJson.innerHTML = JSON.stringify(data, null, 2);
 }
 
-// Update feed
-export function updateFeed(feedValue) {
+/**
+ * Updates feed based on selection
+ * @param {string} feedValue Selected feed value
+ */
+function updateFeed(feedValue) {
     console.log(`Selected feed: ${feedValue}`);
 
     // Clear previous data
@@ -418,12 +391,12 @@ export function updateFeed(feedValue) {
             console.log(`Feed URL: ${url}, CORS Needed: ${cors}`);
             if (cors === "TRUE") {
                 console.log('CORS Needed');
-                showCORSLink();  // Show CORS alert
-                fetchWithCORS(url);  // Perform CORS request and print detailed information
+                showCORSLink();
+                fetchWithCORS(url);
             } else {
                 console.log('No CORS Needed');
-                hideCORSLink();  // Hide CORS alert
-                fetchData(url);  // Directly fetch data
+                hideCORSLink();
+                fetchData(url);
             }
         }
     }).catch(error => {
@@ -431,18 +404,23 @@ export function updateFeed(feedValue) {
     });
 }
 
-// Show CORS alert
-export function showCORSLink() {
-    document.getElementById('corsLink').style.display = 'block';  // Show CORS alert
+/**
+ * CORS UI Helpers
+ */
+function showCORSLink() {
+    document.getElementById('corsLink').style.display = 'block';
 }
 
-// Hide CORS alert
-export function hideCORSLink() {
-    document.getElementById('corsLink').style.display = 'none';  // Hide CORS alert
+function hideCORSLink() {
+    document.getElementById('corsLink').style.display = 'none';
 }
 
-// Fetch feed details
-export function fetchFeedDetails(feedValue) {
+/**
+ * Fetches feed details from Google Sheets
+ * @param {string} feedValue Feed name to fetch details for
+ * @returns {Promise<Object>} Promise resolving to feed details
+ */
+function fetchFeedDetails(feedValue) {
     return new Promise((resolve, reject) => {
         const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
         fetch(url)
@@ -462,28 +440,90 @@ export function fetchFeedDetails(feedValue) {
     });
 }
 
-// Request data (no CORS)
 /**
- * Method also displays data
- * @param {*} url url to fetch data from
+ * Fetches data directly (no CORS)
+ * @param {string} url URL to fetch data from
  */
-export function fetchData(url) {
+function fetchData(url) {
     console.log('CORS not needed URL:', url);
     fetch(url)
         .then(response => response.json())
         .then(data => {
             console.log('Fetched data:', data);
             pulledData = data;
-            displayData(data);  // Display data
+            displayData(data);
         })
         .catch(error => {
             console.error('Data fetch failed:', error);
         });
 }
 
-// Set up event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    getGoogleSheetData();  // Fetch data from Google Sheet
+/**
+ * Method to pull content from the API feed
+ */
+function pullFromAPIFeed() {
+    // Implementation to be added
+}
+
+/**
+ * Event Listeners and DOM Initialization
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize UI elements
+    const submitButton = document.getElementById('submitButton');
+    const loadDataButton = document.getElementById('loadData');
+    const chosenService = document.getElementById('aiModel');
+    const otherApiKeyField = document.getElementById('otherApiKeyContainer');
+    const sourceType = document.getElementById('sourceType');
+    const contextBtn = document.getElementById('contextBtn');
+
+    // Function to check if another API key is needed
+    function checkOtherAPIKeyRequirement() {
+        const service = chosenService.value;
+        const needsOtherAPIKey = ["Anthropic", "Google", "FireworksAI", "Groq", "MistralAI", "TogetherAI", "HuggingFace"].includes(service);
+
+        // Show or hide the other API key field accordingly
+        otherApiKeyField.style.display = needsOtherAPIKey ? "block" : "none";
+    }
+
+    // Debug function to check context
+    function checkContext() {
+        console.log(pulledData);
+    }
+
+    // Add event listeners
+    contextBtn.addEventListener('click', checkContext);
+    chosenService.addEventListener('change', checkOtherAPIKeyRequirement);
+    
+    // Initialize API key field visibility
+    checkOtherAPIKeyRequirement();
+
+    // Set up load data button
+    loadDataButton.addEventListener('click', async () => {
+        loadDataButton.innerHTML = `<span class="animate-spin mr-2">⏳</span> Loading...`;
+        loadDataButton.disabled = true;
+    
+        try {
+            if (sourceType.value === 'feedAPI') {
+                await pullFromAPIFeed();
+            } else {
+                await pullFromRepo();
+            }
+        } catch (error) {
+            console.error('Error loading data:', error);
+        }
+    
+        loadDataButton.innerHTML = "Load the Data Source";
+        loadDataButton.disabled = false;
+    });
+
+    // Set up submit button
+    submitButton.addEventListener('click', async () => {
+        await generateResponse();
+    });
+    
+    // Initialize Google Sheets data
+    getGoogleSheetData();
 });
 
 // Listen for CORS refresh button click event
@@ -493,3 +533,16 @@ document.addEventListener('click', function(event) {
     }
 });
 
+// Export functions for external use
+export {
+    getGoogleSheetData,
+    populateDropdown,
+    fetchWithCORS,
+    parseRSS,
+    displayData,
+    updateFeed,
+    showCORSLink,
+    hideCORSLink,
+    fetchFeedDetails,
+    fetchData
+};
