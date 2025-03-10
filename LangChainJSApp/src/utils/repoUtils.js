@@ -140,3 +140,16 @@ export async function convertToLangChainDocs(owner, repo, branch, token = null) 
 
     return documents;
 }
+
+export async function convertFeedDataToDocuments(data){
+    const documents = [];
+    for(const jsonData of data){
+        const stringifiedData = JSON.stringify(jsonData);
+        documents.push(
+            new Document({
+                pageContent: stringifiedData,
+            })
+        );
+    }
+    return documents;
+}

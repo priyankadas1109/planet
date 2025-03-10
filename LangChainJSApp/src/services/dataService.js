@@ -9,6 +9,7 @@ import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { fetchRepoContentsFromUrl } from "../utils/repoUtils";
 import { initializeLLM, generateHuggingFaceResponse } from "./llmService";
 import { RAG_PROMPT } from "../config/constants";
+import { convertFeedDataToDocuments } from "../utils/repoUtils";
 
 // Global state for data storage
 let pulledData = null;
@@ -83,7 +84,7 @@ export async function pullData() {
   
   if (selectedSource === 'feedAPI') {
     console.log("Pulling data from API feed...");
-    pulledData = tempData;
+    pulledData = await convertFeedDataToDocuments(tempData);
     console.log("Contents:", pulledData);
   } else {
     try {
