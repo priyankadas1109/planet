@@ -1,4 +1,15 @@
+// ------------------------------------------------------------
+// REPOSITORY UTILITIES
+// ------------------------------------------------------------
 import { Document } from "@langchain/core/documents";
+/**
+ * Fetches content from a GitHub repository
+ * @param {string} repoUrl URL of the repository
+ * @param {string} sourceType Type of source (GitHub, etc.)
+ * @param {string} token GitHub token for authentication
+ * @returns {Promise<Array>} Array of document objects
+ */
+
 /**
  * Function to match the pattern of the github URL
  * @param {*} repoUrl The url of the repository from which to fetch the contents
