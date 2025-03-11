@@ -1,4 +1,15 @@
+// ------------------------------------------------------------
+// REPOSITORY UTILITIES
+// ------------------------------------------------------------
 import { Document } from "@langchain/core/documents";
+/**
+ * Fetches content from a GitHub repository
+ * @param {string} repoUrl URL of the repository
+ * @param {string} sourceType Type of source (GitHub, etc.)
+ * @param {string} token GitHub token for authentication
+ * @returns {Promise<Array>} Array of document objects
+ */
+
 /**
  * Function to match the pattern of the github URL
  * @param {*} repoUrl The url of the repository from which to fetch the contents
@@ -127,5 +138,18 @@ export async function convertToLangChainDocs(owner, repo, branch, token = null) 
         }
     }
 
+    return documents;
+}
+
+export async function convertFeedDataToDocuments(data){
+    const documents = [];
+    for(const jsonData of data){
+        const stringifiedData = JSON.stringify(jsonData);
+        documents.push(
+            new Document({
+                pageContent: stringifiedData,
+            })
+        );
+    }
     return documents;
 }
