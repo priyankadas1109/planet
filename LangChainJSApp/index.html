@@ -8,107 +8,137 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         h3 {
-            margin-bottom: 4px !important;
-            font-weight: bold !important;
+            margin-bottom: 0.5rem !important;
+            font-weight: 600 !important;
+        }
+        
+        .card-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        
+        .focus-ring {
+            @apply focus:ring-2 focus:ring-blue-500 focus:outline-none;
+        }
+        
+        body {
+            background-image: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
         }
     </style>
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
-    <div class="max-w-3xl w-full bg-white shadow-xl rounded-lg p-8 border border-gray-200">
-        <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">RAG Query System</h1>
-
-        <!-- AI Model Selection -->
-        <div class="mb-6">
-            <h3 class="text-lg font-semibold text-gray-700">Select your Model:</h3>
-            <select id="aiModel" onchange="toggleModelInputs()" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300">
-                <option value="OpenAI">OpenAI</option>
-                <option value="Azure">Azure</option>
-                <option value="Anthropic">Anthropic</option>
-                <option value="Google">Google</option>
-                <option value="Cohere">Cohere</option>
-                <option value="FireworksAI">FireworksAI</option>
-                <option value="Groq">Groq</option>
-                <option value="MistralAI">MistralAI</option>
-                <option value="TogetherAI">TogetherAI</option>
-                <option value="HuggingFace">HuggingFace</option>
-            </select>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="max-w-4xl w-full bg-white card-shadow rounded-xl p-8 border border-gray-200">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-center text-gray-800">RAG Query System</h1>
+            <p class="text-center text-gray-600 mt-2">Retrieval Augmented Generation for accurate AI responses</p>
         </div>
 
-        <p class="text-sm text-gray-600 mb-4">If you choose Anthropic, Google, FireworksAI, Groq, MistralAI, TogetherAI, or HuggingFace, you must provide an OpenAI API Key for the embedding model.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Left Column: Configuration -->
+            <div class="space-y-6">
+                <!-- AI Model Selection -->
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-700">AI Model</h3>
+                    <select id="aiModel" onchange="toggleModelInputs()" class="w-full p-2.5 mt-2 border rounded-lg focus-ring bg-white">
+                        <option value="OpenAI">OpenAI</option>
+                        <option value="Azure">Azure</option>
+                        <option value="Anthropic">Anthropic</option>
+                        <option value="Google">Google</option>
+                        <option value="Cohere">Cohere</option>
+                        <option value="FireworksAI">FireworksAI</option>
+                        <option value="Groq">Groq</option>
+                        <option value="MistralAI">MistralAI</option>
+                        <option value="TogetherAI">TogetherAI</option>
+                        <option value="HuggingFace">HuggingFace</option>
+                    </select>
+                    <p class="text-sm text-gray-600 mt-2 italic">Non-OpenAI models require an OpenAI API Key for embeddings</p>
+                </div>
 
-        <div id="huggingFaceModelContainer" class="mb-4 hidden">
-            <h3 class="text-lg font-semibold text-gray-700">Enter Hugging Face Model Name</h3>
-            <input type="text" id="huggingFaceModel" class="w-full p-2 border rounded-md" placeholder="Enter Hugging Face model name">
-        </div>
-        
-        <!-- API Key Input -->
-        <div class="mb-6">
-            <h3 class="text-lg font-semibold text-gray-700">Enter the LLM API Key</h3>
-            <textarea id="apiKey" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300" placeholder="Enter your LLM's API key"></textarea>
-        </div>
+                <div id="huggingFaceModelContainer" class="hidden bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-700">Hugging Face Model</h3>
+                    <input type="text" id="huggingFaceModel" class="w-full p-2.5 mt-2 border rounded-lg focus-ring bg-white" placeholder="Enter Hugging Face model name">
+                </div>
+                
+                <!-- API Key Input -->
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-700">LLM API Key</h3>
+                    <textarea id="apiKey" class="w-full p-2.5 mt-2 border rounded-lg focus-ring bg-white h-20" placeholder="Enter your LLM's API key"></textarea>
+                </div>
 
-        <div id="otherApiKeyContainer" class="mb-6 hidden">
-            <h3 class="text-lg font-semibold text-gray-700">Enter OpenAI API Key</h3>
-            <input type="text" id="otherApiKey" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300" placeholder="Enter OpenAI API Key">
-        </div>
+                <div id="otherApiKeyContainer" class="hidden bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-700">OpenAI API Key</h3>
+                    <input type="text" id="otherApiKey" class="w-full p-2.5 mt-2 border rounded-lg focus-ring bg-white" placeholder="Enter OpenAI API Key">
+                </div>
 
-        <!-- GitHub Token Input -->
-        <div class="mb-6">
-            <h3 class="text-lg font-semibold text-gray-700">Enter GitHub Personal Access Token</h3>
-            <textarea id="githubToken" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300" placeholder="Enter your GitHub token"></textarea>
-        </div>
-
-        <!-- Document Source Selection -->
-        <div class="mb-6">
-            <h3 class="text-lg font-semibold text-gray-700">Document Source</h3>
-            <select id="sourceType" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300 mt-2" onchange="toggleSourceInput()">
-            <option value="single">Single File</option>
-            <option value="folder">GitHub Folder</option>
-            <option value="repo">Entire GitHub Repository</option>
-            <option value="feedAPI">Feed API</option>
-            </select>
-
-            <!-- Single File Input -->
-            <div id="sourceUrlContainer" class="mt-4">
-            <h3 class="text-lg font-semibold text-gray-700">Enter GitHub URL</h3>
-            <input id="sourceUrl" type="text" placeholder="Enter GitHub URL" class="w-full p-2 border rounded-md focus:ring focus:ring-green-300 mt-2">
+                <!-- GitHub Token Input -->
+                <div id="githubTokenContainer" class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-700">GitHub Token</h3>
+                    <textarea id="githubToken" class="w-full p-2.5 mt-2 border rounded-lg focus-ring bg-white h-20" placeholder="Enter your GitHub personal access token"></textarea>
+                </div>
             </div>
 
-            <!-- Feed API Selection -->
-            <div id="feedApiContainer" class="mt-4 hidden">
-                <h3 class="text-lg font-semibold text-gray-700">Select Feed API</h3>
-    
-                <select id="apiFeeds" onchange="window.updateFeed(this.value)">
-                </select>
-    
-                <div id="resultJson"></div>
-                <div id="resultFull"></div>
-    
-                <!-- CORS alert -->
-                <div id="corsLink">
-                    <span>IMPORTANT</span>
-                    <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="passthrough" onclick="alert('Remember to refresh the page after enabling CORS passthrough!')">Turn on CORS passthrough</a> (then refresh this page)
+            <!-- Right Column: Document Source & Query -->
+            <div class="space-y-6">
+                <!-- Document Source Selection -->
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-700">Document Source</h3>
+                    <select id="sourceType" class="w-full p-2.5 mt-2 border rounded-lg focus-ring bg-white" onchange="toggleSourceInput()">
+                        <option value="single">Single File</option>
+                        <option value="folder">GitHub Folder</option>
+                        <option value="repo">Entire GitHub Repository</option>
+                        <option value="feedAPI">Feed API</option>
+                    </select>
+
+                    <!-- Single File Input -->
+                    <div id="sourceUrlContainer" class="mt-4">
+                        <h3 class="text-md font-semibold text-gray-700">GitHub URL</h3>
+                        <input id="sourceUrl" type="text" placeholder="Enter GitHub URL" class="w-full p-2.5 mt-2 border rounded-lg focus-ring bg-white">
+                    </div>
+
+                    <!-- Feed API Selection -->
+                    <div id="feedApiContainer" class="mt-4 hidden">
+                        <h3 class="text-md font-semibold text-gray-700">Feed API</h3>
+                        <select id="apiFeeds" class="w-full p-2.5 mt-2 border rounded-lg focus-ring bg-white" onchange="window.updateFeed(this.value)">
+                        </select>
+                        
+                        <div id="resultJson" class="mt-2 text-sm"></div>
+                        <div id="resultFull" class="mt-2 text-sm"></div>
+                        
+                        <!-- CORS alert -->
+                        <div id="corsLink" class="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg text-sm">
+                            <span class="font-bold">IMPORTANT:</span>
+                            <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="passthrough" class="text-blue-600 underline" onclick="alert('Remember to refresh the page after enabling CORS passthrough!')">Turn on CORS passthrough</a> (refresh this page after)
+                        </div>
+                    </div>
                 </div>
-            </div>            
-        </div>
-        
-        <!--Button for debugging purposes-->
-        <button id="contextBtn">Press me to see the context!</button>
-        <div class="mb-4 text-red-500 font-semibold">
-            IMPORTANT: Please click the "Load the Data Source" button before submitting your query.
-        </div>
-        <div>
-            <button id="loadData" class="w-full bg-blue-500 text-white py-3 rounded-md mb-4 hover:bg-blue-600 transition">Load the Data Source</button>
-        </div>
-
-        <!-- User Query Input -->
-        <div class="mb-6">
-            <h3 class="text-lg font-semibold text-gray-700">Enter your Query</h3>
-            <textarea id="userQuery" class="w-full p-3 border rounded-md focus:ring focus:ring-green-300" placeholder="Enter your question based on the data source"></textarea>
-            <button id="submitButton" class="w-full bg-green-500 text-white py-3 rounded-md mt-4 hover:bg-green-600 transition">Submit Query</button>
+                
+                <!-- Debug Button -->
+                <div class="text-center">
+                    <button id="contextBtn" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 text-sm transition-all">View Context</button>
+                </div>
+                
+                <!-- Load Data Button -->
+                <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                    <div class="mb-3 text-red-600 font-semibold text-sm">
+                        IMPORTANT: Click "Load Data Source" before submitting your query.
+                    </div>
+                    <button id="loadData" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-all font-medium">Load Data Source</button>
+                </div>
+            </div>
         </div>
 
-        <div id="response" class="mt-4 p-4 bg-gray-200 rounded-md text-gray-800 whitespace-pre-wrap"></div>
+        <!-- User Query Input (Full Width) -->
+        <div class="mt-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-700">Your Question</h3>
+            <textarea id="userQuery" class="w-full p-3 mt-2 border rounded-lg focus-ring bg-white h-24" placeholder="Enter your question about the loaded data source"></textarea>
+            <button id="submitButton" class="w-full bg-green-600 text-white py-3 rounded-lg mt-4 hover:bg-green-700 transition-all font-medium">Submit Query</button>
+        </div>
+
+        <!-- Response Area -->
+        <div id="response" class="mt-6 p-5 bg-gray-100 rounded-lg text-gray-800 whitespace-pre-wrap min-h-16 border border-gray-200 overflow-auto"></div>
     </div>
     
     <script type="module" src="src/index.js"></script>
@@ -122,27 +152,43 @@
         window.updateFeed = updateFeed;
     </script>
 
-
-<!--Functions to handle toggling of inputs-->
+    <!--Functions to handle toggling of inputs-->
     <script>
         function toggleModelInputs() {
             var aiModel = document.getElementById("aiModel").value;
-            document.getElementById("huggingFaceModelContainer").style.display = aiModel === "HuggingFace" ? "block" : "none";
+            var otherApiKeyContainer = document.getElementById("otherApiKeyContainer");
+            var huggingFaceModelContainer = document.getElementById("huggingFaceModelContainer");
+            
+            // Show/hide HuggingFace model input
+            huggingFaceModelContainer.style.display = aiModel === "HuggingFace" ? "block" : "none";
+            
+            // Show/hide OpenAI API Key input for non-OpenAI models
+            otherApiKeyContainer.style.display = 
+                ["Anthropic", "Google", "FireworksAI", "Groq", "MistralAI", "TogetherAI", "HuggingFace"].includes(aiModel) 
+                ? "block" : "none";
         }
+        
         function toggleSourceInput() {
             var sourceType = document.getElementById("sourceType").value;
             var sourceUrlContainer = document.getElementById("sourceUrlContainer");
             var feedApiContainer = document.getElementById("feedApiContainer");
-
+            var githubTokenContainer = document.getElementById("githubTokenContainer");
+            
             if (sourceType === "feedAPI") {
                 sourceUrlContainer.style.display = "none";
                 feedApiContainer.style.display = "block";
+                githubTokenContainer.style.display = "none";
             } else {
                 sourceUrlContainer.style.display = "block";
                 feedApiContainer.style.display = "none";
+                githubTokenContainer.style.display = "block";
             }
         }
+        
+        // Run toggleModelInputs on page load to set initial state
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleModelInputs();
+        });
     </script>
-
 </body>
 </html>
