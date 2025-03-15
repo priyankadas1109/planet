@@ -40,7 +40,7 @@ export function populateDropdown(feedData) {
   feedData.forEach(feed => {
     const option = document.createElement('option');
     option.value = feed[0]; // Feed name
-    option.textContent = feed[0];
+    option.textContent = feed[1];
     selectElement.appendChild(option);
   });
 

@@ -2,3 +2,6 @@
 
 # Planet Langchang - Javascript with LLM APIs
 
+Our javascript-only implementation resides in the langchain folder.
+
+View at [model.earth/planet/langchain](https://model.earth/planet/langchain)
