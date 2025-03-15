@@ -2,7 +2,7 @@
 // RSS PARSER UTILITY
 // ------------------------------------------------------------
 
-import { setTempData } from '../services/dataService';
+import { setTempData } from '../services/dataService.js';
 
 /**
  * Parses RSS/XML data

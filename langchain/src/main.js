@@ -2,9 +2,9 @@
 // MAIN APPLICATION FILE
 // ------------------------------------------------------------
 
-import { getGoogleSheetData, updateFeed } from './services/googleSheetsService';
-import { pullData, generateResponse, checkPulledData } from './services/dataService';
-import { checkOtherAPIKeyRequirement, setLoadingState } from './utils/uiHelpers';
+import { getGoogleSheetData, updateFeed } from './services/googleSheetsService.js';
+import { pullData, generateResponse, checkPulledData } from './services/dataService.js';
+import { checkOtherAPIKeyRequirement, setLoadingState } from './utils/uiHelpers.js';
 
 // ------------------------------------------------------------
 // EVENT LISTENERS AND INITIALIZATION

@@ -2,8 +2,8 @@
 // CORS SERVICE
 // ------------------------------------------------------------
 
-import { parseRSS } from '../utils/rssParser';
-import { setTempData } from './dataService';
+import { parseRSS } from '../utils/rssParser.js';
+import { setTempData } from './dataService.js';
 
 /**
  * Fetches data using CORS proxy

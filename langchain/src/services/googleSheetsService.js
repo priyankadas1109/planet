@@ -2,10 +2,10 @@
 // GOOGLE SHEETS SERVICE
 // ------------------------------------------------------------
 
-import { SPREADSHEET_ID, RANGE, API_KEY } from '../config/constants';
-import { fetchData, fetchWithCORS } from './corsService';
-import { setTempData } from './dataService';
-import { showCORSLink, hideCORSLink } from '../utils/uiHelpers';
+import { SPREADSHEET_ID, RANGE, API_KEY } from '../config/constants.js';
+import { fetchData, fetchWithCORS } from './corsService.js';
+import { setTempData } from './dataService.js';
+import { showCORSLink, hideCORSLink } from '../utils/uiHelpers.js';
 
 /**
  * Fetches data from Google Sheets API

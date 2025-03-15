@@ -12,9 +12,6 @@ Optional commands to run as a server:
 	npm i
 	npm run dev
 
-
-We've also dabbled with Python in our [Langchain Python Repo](https://github.com/ModelEarth/langchain)
-
 <!--
 Not needed since 100% client-side
 cd server
