@@ -13,7 +13,6 @@ import { convertFeedDataToDocuments } from "../utils/repoUtils";
 
 // Global state for data storage
 let pulledData = null;
-let tempData = null;
 
 /**
  * Main method to generate responses based on context and user query
@@ -84,7 +83,7 @@ export async function pullData() {
   
   if (selectedSource === 'feedAPI') {
     console.log("Pulling data from API feed...");
-    pulledData = await convertFeedDataToDocuments(tempData);
+    pulledData = await convertFeedDataToDocuments(pulledData);
     console.log("Contents:", pulledData);
   } else {
     try {
@@ -101,7 +100,7 @@ export async function pullData() {
  * @param {any} data The data to store
  */
 export function setTempData(data) {
-  tempData = data;
+  pulledData = data;
 }
 
 /**
