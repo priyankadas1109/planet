@@ -1,19 +1,10 @@
 [Active Projects](https://model.earth/projects)
 
-# Planet AI - Javascript with LLM APIs
+# Planet Langchang - Javascript with LLM APIs
 
-A javascript frontend for exploring AI APIs using location data and environmental impact data.
+Our javascript-only implementation resides in the langchain folder.
 
-[View our interface work](LangChainJSApp) (client-side javascript)
+View at [model.earth/planet/langchain](https://model.earth/planet/langchain)
 
-LangChain.js javascript setup: [api.js.langchain.com](https://api.js.langchain.com)
+We also have a [Langchain Python Repo](https://github.com/ModelEarth/langchain)
 
-Optional commands to run as a server:
-
-	cd LangChainJSApp
-	npm i
-	cd server
-	npm run dev
-
-
-We've also dabbled with Python in our [Langchain Python Repo](https://github.com/ModelEarth/langchain)
