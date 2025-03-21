@@ -1,4 +1,4 @@
-[Active Projects](https://model.earth/projects)
+[Active Projects](../projects)
 
 # Planet Langchang - Javascript with LLM APIs
 
