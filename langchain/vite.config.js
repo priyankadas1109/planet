@@ -2,7 +2,9 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   build: {
-    target: 'esnext'
+    target: 'esnext',
+    outDir: "dist", // Output folder for static files
+    emptyOutDir: true,
   },
   server: {
     proxy: {

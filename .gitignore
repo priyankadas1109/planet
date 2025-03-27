@@ -4,5 +4,7 @@ myenv
 rag_pipe.ipynb
 package-lock.json
 .DS_Store 
+node_modules/
+dist/
 # yarn.lock
 # package.json
