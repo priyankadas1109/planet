@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feed View</title>
+  <style>
+    /* Dropdown menu style */
+    #apiFeeds {
+      width: 200px;
+      padding: 8px;
+      font-size: 16px;
+      margin: 10px;
+      background-color: #f0f0f0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    @media (max-width: 760px) {
+      table, th, td {
+        display: block;
+        width: 100%;
+      }
+      td {
+        border-bottom: 1px solid #ddd;
+      }
+    }
+
+    /* CORS alert */
+    #corsLink {
+      display: none;
+      margin: 12px 0 32px 0;
+      background-color: #444;
+      color: white;
+      padding: 8px 20px;
+      margin-right: 10px;
+    }
+
+    #corsLink a {
+      color: #ffffff;
+      text-decoration: underline;
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/index-FSMY5qsx.js"></script>
+</head>
+<body>
+
+  <select id="apiFeeds" onchange="updateFeed(this.value)">
+  </select>
+
+  <div id="resultJson"></div>
+  <div id="resultFull"></div>
+
+  <!-- CORS alert -->
+  <div id="corsLink">
+    <span>IMPORTANT</span>
+    <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="passthrough" onclick="alert('Remember to refresh the page after enabling CORS passthrough!')">Turn on CORS passthrough</a> (then refresh this page)
+  </div>
+
+
+</body>
+</html>
