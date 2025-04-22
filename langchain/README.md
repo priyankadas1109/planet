@@ -1,9 +1,9 @@
 # Planet Langchain
 
-View our [interface development](trade)  
+View our [interface development](trade) - view in [website](https://model.earth/planet/langchain/trade/) 
 Click: Document Source > Feed API
 
-Install dependencies, including Vite, into the node_modules folder:
+Install dependencies, including vite, into the node_modules folder:
 
 	npm install
 
@@ -13,12 +13,18 @@ To build to trade folder, run:
 
 View in your webroot. [Cmd to turn on your webroot](https://dreamstudio.com/localsite/start/steps/).
 
+Layout resides in layout.html
+
 ### Projects
+
+Here's a [test page](test.html) for debugging embedding.  
 
 TO DO: When embedding, there's currently an error:  
 
-	Cannot read properties of null (reading 'addEventListener')
-    at layout.js:649:4297
+	Uncaught TypeError: Failed to resolve module specifier "langchain/vectorstores/memory".  
+	Relative references must start with either "/", "./", or "../".
 
-Here's a stripped-down [test page](test.html) for debugging embedding.  
-Maybe you could turn off minifying to see line 649.
+
+That error means layout.js is trying to import a bare module specifier ("langchain/vectorstores/memory"), which only works in a bundler-aware environment (like Vite, Webpack, or Node's module resolver). Browsers don't know how to resolve "langchain/..." unless it's explicitly hosted or rewritten.
+
+From [chatGPT](https://chatgpt.com/share/6807b2e2-ed38-8003-be2e-361664a64e70) - Offers steps for creating layout.bundle.js that didn't work yet.
