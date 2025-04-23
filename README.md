@@ -1,6 +1,6 @@
 [Active Projects](../projects)
 
-# Planet Langchang - Javascript with LLM APIs
+# Planet Langchain - Javascript with LLM APIs
 
 Our javascript-only implementation resides in the [langchain folder](langchain)
 
