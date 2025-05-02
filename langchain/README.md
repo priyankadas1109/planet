@@ -15,6 +15,8 @@ View in your webroot. [Cmd to turn on your webroot](https://dreamstudio.com/loca
 
 Layout resides in layout.html
 
+The [trade folder](trade/) is the dist (built) output, so avoid making edits in trade.
+
 ### Projects
 
 Here's a [test page](test.html) for debugging embedding.  
