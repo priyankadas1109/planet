@@ -41,11 +41,14 @@ export default defineConfig(({ command }) => {
         },
       },
     ],
-    base: '', // adjust this to your actual deployment path if needed
+    base: '',
     build: {
       outDir: 'trade',
       rollupOptions: {
-        input: './layout.html',
+        input: {
+          app: path.resolve(__dirname, 'layout.html'),
+          widget: path.resolve(__dirname, 'src/main.js'),
+        },
         output: {
           assetFileNames: 'assets/[name].[ext]',
           chunkFileNames: 'assets/[name].js',
