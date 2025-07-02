@@ -13,14 +13,31 @@ import { showCORSLink, hideCORSLink } from '../utils/uiHelpers.js';
 export function getGoogleSheetData() {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
   
+  console.log('Attempting to fetch Google Sheets data from:', url);
+  
   fetch(url)
-    .then(response => response.json())
+    .then(response => {
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
     .then(data => {
-      console.log('Success:', data);
-      populateDropdown(data.values);
+      console.log('Google Sheets API Success:', data);
+      
+      if (data.values && data.values.length > 0) {
+        populateDropdown(data.values);
+      } else {
+        console.warn('No data found in Google Sheets response');
+        showGoogleSheetsError('No data found in the Google Sheet');
+      }
     })
     .catch(error => {
-      console.error('Error:', error);
+      console.error('Google Sheets API Error:', error);
+      showGoogleSheetsError(`Failed to load data: ${error.message}`);
     });
 }
 
@@ -119,4 +136,62 @@ export function displayData(data) {
   const resultJson = document.getElementById('resultJson');
   resultJson.innerHTML = JSON.stringify(data, null, 2);
   setTempData(data);
+}
+
+/**
+ * Displays Google Sheets error to user
+ * @param {string} message Error message to display
+ */
+function showGoogleSheetsError(message) {
+  const selectElement = document.getElementById('apiFeeds');
+  if (selectElement) {
+    selectElement.innerHTML = `<option value="error">Error: ${message}</option>`;
+  }
+  
+  // Also show in console for debugging
+  console.error('Google Sheets Error:', message);
+}
+
+/**
+ * Tests Google Sheets API access
+ * @returns {Promise<boolean>} True if API is accessible, false otherwise
+ */
+export async function testGoogleSheetsAPI() {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+  
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (response.ok && data.values) {
+      console.log('✅ Google Sheets API test successful');
+      return true;
+    } else {
+      console.error('❌ Google Sheets API test failed:', data);
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Google Sheets API test error:', error);
+    return false;
+  }
+}
+
+/**
+ * Debug function to check various aspects of the Google Sheets setup
+ */
+export function debugGoogleSheetsSetup() {
+  console.log('🔍 Google Sheets Debug Information:');
+  console.log('Spreadsheet ID:', SPREADSHEET_ID);
+  console.log('Range:', RANGE);
+  console.log('API Key (first 10 chars):', API_KEY.substring(0, 10) + '...');
+  console.log('Full API URL:', `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`);
+  
+  // Test the API
+  testGoogleSheetsAPI().then(success => {
+    if (success) {
+      console.log('✅ Google Sheets API is working correctly');
+    } else {
+      console.log('❌ Google Sheets API has issues - check API key, permissions, and spreadsheet settings');
+    }
+  });
 }
