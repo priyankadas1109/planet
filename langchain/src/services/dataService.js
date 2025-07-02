@@ -7,12 +7,14 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { fetchRepoContentsFromUrl } from "../utils/repoUtils";
+import { fetchEnhancedRepositoryContents, generateRepositorySummary } from "./githubService";
 import { initializeLLM, generateHuggingFaceResponse } from "./llmService";
 import { RAG_PROMPT } from "../config/constants";
 import { convertFeedDataToDocuments } from "../utils/repoUtils";
 
 // Global state for data storage
 let pulledData = null;
+let repositorySummary = null;
 
 /**
  * Main method to generate responses based on context and user query
@@ -74,7 +76,7 @@ export async function generateResponse() {
 }
 
 /**
- * Pull content from a GitHub repository or other source
+ * Pull content from a GitHub repository or other source with enhanced processing
  */
 export async function pullData() {
   const selectedSource = document.getElementById('sourceType').value;
@@ -87,10 +89,48 @@ export async function pullData() {
     console.log("Contents:", pulledData);
   } else {
     try {
-      pulledData = await fetchRepoContentsFromUrl(repoUrl, selectedSource, githubToken);
+      // Use enhanced GitHub service for better processing
+      if (selectedSource === 'repo' && repoUrl.includes('github.com')) {
+        const match = repoUrl.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)/);
+        if (match) {
+          const [, owner, repo] = match;
+          console.log(`Enhanced processing for ${owner}/${repo}`);
+          
+          const enhancedOptions = {
+            maxFileSize: 2 * 1024 * 1024, // 2MB max
+            maxFiles: 150,
+            includePatterns: [
+              /\.(md|txt|json|yaml|yml|py|js|ts|jsx|tsx|java|cpp|c|cs|go|rs|rb|php|swift|kt|scala|sh|bat|sql|r|m|h|hpp|cc|cxx)$/i,
+              /^(README|LICENSE|CHANGELOG|CONTRIBUTING|CODE_OF_CONDUCT|SECURITY|INSTALL|USAGE|API|DOCS)(\.|$)/i
+            ],
+            excludePatterns: [
+              /node_modules|\.git|\.vscode|\.idea|__pycache__|\.pytest_cache|\.coverage|dist|build|target|vendor|\.next|\.nuxt/,
+              /\.(png|jpg|jpeg|gif|svg|ico|pdf|zip|tar|gz|7z|exe|dll|so|dylib|woff|woff2|ttf|eot|mp4|mp3|avi|mov)$/i
+            ]
+          };
+          
+          pulledData = await fetchEnhancedRepositoryContents(owner, repo, 'main', '', githubToken, enhancedOptions);
+          
+          if (pulledData.length > 0) {
+            console.log(`Enhanced processing complete: ${pulledData.length} documents loaded`);
+            
+            // Generate and log repository summary
+            const summary = generateRepositorySummary(pulledData);
+            console.log("Repository Summary:", summary);
+            
+            // Store summary for easy access
+            setRepositorySummary(summary);
+          }
+        }
+      } else {
+        // Fall back to original method for other cases
+        pulledData = await fetchRepoContentsFromUrl(repoUrl, selectedSource, githubToken);
+      }
+      
       console.log("Contents:", pulledData);
     } catch(e) {
       console.log("Error loading documents:", e);
+      throw e; // Re-throw to handle in UI
     }
   }
 }
@@ -109,4 +149,20 @@ export function setTempData(data) {
 export function checkPulledData() {
   console.log(pulledData);
   return pulledData;
+}
+
+/**
+ * Store repository summary
+ * @param {string} summary The repository summary
+ */
+export function setRepositorySummary(summary) {
+  repositorySummary = summary;
+}
+
+/**
+ * Get stored repository summary
+ * @returns {string|null} The repository summary or null
+ */
+export function getRepositorySummary() {
+  return repositorySummary;
 }
